@@ -64,7 +64,15 @@ Confirmed with the project owner (2026-10-05):
    `stale`; a holding with no price at all yet is valued at its cost and
    flagged `missing`.
 4. **Dashboard:**
-   - Leaderboard ranked by current value / return %.
+   - **Leaderboard (home page `/`, ADR 016, `src/lib/leaderboard.ts`):**
+     players ranked by value on the latest day with prices (before the
+     first daily run: today), with total return and day change in € and %,
+     green ▲ for up and red ▼ for down. Equal values share a place. 🥇🥈🥉
+     for places 1–3 and 🥄 for last place from 4th down, but no awards before
+     the game starts or while everyone is level. The header says which day
+     the prices are from; a player whose value uses an old price, or a new
+     buy without a price yet, gets a ⏳ note. Before 2026-11-01 the page shows
+     a kick-off countdown and the line-up instead.
    - Chart of each player's value over time.
    - Per-player breakdown of current holdings, their performance, total fees
      and dividends.
@@ -206,14 +214,17 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `[playerId]/` shows their position, history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
   `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
+- `src/app/page.tsx`: the home page with the leaderboard.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
-  money formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
+  money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
   access (`players.ts`, `instruments.ts`), transaction entry
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
-  `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath).
+  `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath),
+  and the leaderboard (`leaderboard.ts`: day to show, places, awards,
+  old-price notes, day formatting).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
@@ -317,7 +328,9 @@ Where production values live (ADR 009); never in git:
   (Xetra), `IWDA.AS` (Euronext Amsterdam), `BTC-EUR` (crypto, quoted in EUR).
   Find symbols with Yahoo's search (ADR 003).
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
-  renders `€1,234.56`.
+  renders `€1,234.56`. Gains and losses use `formatSignedEuroCents`
+  (`+€12.34`, `−€0.50`) and `formatSignedPercent` (`+5.23%`), with a real
+  minus sign (−).
 - Import from `src` with the `@/` alias (`@/lib/money`).
 - Forms that can fail use `useActionState`. The lib function throws
   `InputError` (`@/lib/db/errors`) with a message for the user, and the
