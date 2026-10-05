@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  createSessionToken,
+  sessionCookieOptions,
+  sessionNeedsRenewal,
+  verifySessionToken,
+} from "@/lib/auth";
 
 // Shared-password gate for every page and API route (ADR 006).
 export async function proxy(request: NextRequest) {
@@ -7,8 +13,14 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/login") return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (await verifySessionToken(token, process.env.SITE_PASSWORD)) {
-    return NextResponse.next();
+  const password = process.env.SITE_PASSWORD;
+  if (await verifySessionToken(token, password)) {
+    const response = NextResponse.next();
+    // Sliding expiry: a player who visits keeps a fresh 90-day session.
+    if (sessionNeedsRenewal(token!)) {
+      response.cookies.set(SESSION_COOKIE, await createSessionToken(password!), sessionCookieOptions());
+    }
+    return response;
   }
 
   if (pathname.startsWith("/api/")) {
