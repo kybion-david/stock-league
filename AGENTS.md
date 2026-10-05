@@ -30,12 +30,15 @@ need. If something looks under-engineered, that may be intentional — check
 | `docs/STATUS.md` | **Where we are**: current state, next steps, open questions, known issues. |
 | `docs/decisions/` | **Why**: numbered ADRs (`NNN-slug.md`). See `docs/decisions/README.md`. |
 | `tickets/` | Work items. `backlog/` = open, `done/` = finished. Format: `tickets/TEMPLATE.md`. |
-| `.github/` | PR template and CI (incl. the docs-check workflow). |
+| `.github/` | PR template and CI workflows (`ci` = lint/typecheck/test/build, `docs-check`). |
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
+| `src/app/` | Next.js App Router pages and layouts. |
+| `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. |
 | `scripts/` | Standalone Node scripts (currently the market-data proof of concept from ADR 003). |
+| `package.json`, `*.config.*`, `tsconfig.json`, `.nvmrc` | App tooling config (ADR 005). |
 
-No application code exists yet. When it does, add its folders to this map
-**and** to the Structure section of `docs/SPEC.md`.
+When you add folders, add them to this map **and** to the Structure section
+of `docs/SPEC.md`.
 
 ## Session workflow
 
@@ -144,4 +147,16 @@ the doc.
   `€1,234.56`.
 - Never commit secrets. Use `.env` (gitignored) and document variable names
   in `.env.example`.
-- More conventions appear in `docs/SPEC.md` → Conventions once code exists.
+- Code conventions live in `docs/SPEC.md` → Conventions.
+- The Next.js block below is maintained by `next dev`, which re-adds it if
+  it's missing. Leave it in place.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

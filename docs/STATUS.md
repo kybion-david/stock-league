@@ -1,20 +1,24 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (tickets 001 and 002 done: hosting/DB in ADR 004, market data in ADR 003; one-worktree-per-task workflow added).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 003 done: Next.js app scaffolded with lint/typecheck/test CI, ADR 005).
 
 ## Current state
 
 - The repository is set up with AI context (`AGENTS.md`, this file, `SPEC.md`,
   ADRs), a ticket backlog, a PR template, and a CI docs-check.
+- **App scaffolded (ticket 003, ADR 005):** Next.js 16 + TypeScript +
+  Tailwind on Node 22. It's only a placeholder home page plus
+  `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
+  typecheck, test and build on every PR. Nothing is deployed and there's no
+  database or password gate yet.
 - Agents work in one git worktree per task, removed when the PR is open
   (`AGENTS.md` → Session workflow). A Claude Code hook blocks edits in the
   main checkout.
-- **No application code exists yet.**
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
-  GitHub Actions. Nothing is provisioned yet; that happens in tickets 003, 004 and 006.
+  GitHub Actions. Nothing is provisioned yet; that happens in tickets 004 and 006.
 - **Market data decided (ADR 003):** Yahoo Finance chart API (prices, crypto,
   symbol search) + Frankfurter/ECB (FX). Keyless, so no env vars. Verified
   with `scripts/poc-market-data.mjs` against 2026-09-30.
@@ -28,12 +32,14 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001 and 002 are done; 003
-(scaffold) is next.
+lowest number whose dependencies are done. 001–003 are done; 004
+(database schema and seed) is next. 005 (password gate) also only needs 003,
+so it can run in parallel. Do 006 (deploy) right after 005 because of the
+SWA preview risk below.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -57,3 +63,8 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
   block GitHub Actions IPs. That hasn't been tested from a runner yet: check
   it in ticket 010, and use the fallbacks listed in ADR 003 if it fails.
+- Node 22 is pinned (ADR 005), but it hasn't been confirmed that SWA's managed
+  backend runs it. Check in ticket 006, and drop to Node 20 if needed.
+- `npm audit` reports 5 high-severity advisories in lint-only dev
+  dependencies (via `eslint-config-next`). They're accepted until upstream
+  fixes them (ADR 005).
