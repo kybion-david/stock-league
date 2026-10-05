@@ -98,7 +98,7 @@ from it, never stored as the source of truth. Postgres tables, created by
 - **`price_snapshots`:** `instrument_id`, `date`, `close` (decimal, in the
   instrument's currency), `currency`, `fetched_at`. One row per instrument
   and day. The market-data client returns closes in **major units** with an
-  ISO code (a `GBp` listing's close comes back in `GBP`), so store its
+  ISO code (a `GBp` listing's close comes back in `GBP`; ADR 010), so store its
   `currency`, not the instrument's, and look FX up by it.
 - **`fx_snapshots`:** `date`, `currency`, `units_per_eur`, `fetched_at`. One
   row per currency and day. The rate is the ECB quote with base EUR
@@ -141,7 +141,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Auth:** the shared-password gate is implemented in the app (ADR 002),
   because SWA's built-in password protection isn't on the Free plan.
 - **Charts:** to be chosen in ticket 015.
-- **Market data (ADR 003):** Yahoo Finance chart API for stock, ETF and
+- **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
   FX to EUR. Both are keyless and free. Code depends only on the
   `MarketDataClient` interface in `src/lib/market-data.ts`

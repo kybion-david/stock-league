@@ -31,12 +31,13 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 010
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
   GitHub Actions. Nothing is provisioned yet.
-- **Market-data client done (ticket 010, ADR 003):** `src/lib/market-data.ts`
-  wraps Yahoo (closes, symbol lookup and search) and Frankfurter/ECB (FX to
-  EUR), with retries and typed errors. Unit-tested with mocks; the live test
-  (`npm run test:live`) passes locally and on a GitHub Actions runner
-  (run 37343774152 on 2026-10-05, all 9 live tests passed). Nothing calls it yet: 011 stores snapshots with it, and
-  008 can use `lookupSymbol` to check symbols. The PoC script is deleted.
+- **Market-data client done (ticket 010, ADRs 003 and 010):**
+  `src/lib/market-data.ts` wraps Yahoo (closes, symbol lookup and search) and
+  Frankfurter/ECB (FX to EUR), with retries and typed errors. Unit-tested
+  with mocks. The live test (`npm run test:live`) passes locally and on a
+  GitHub Actions runner (run 37343774152 on 2026-10-05, all 9 passed).
+  Nothing calls it yet: 011 stores snapshots with it, and 008 can use
+  `lookupSymbol` to check symbols. The PoC script is deleted.
 
 ## Deadline
 
@@ -48,7 +49,8 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
 lowest number whose dependencies are done. 001–004, 007 and 010 are done. 005
-(password gate) is next; 008 needs it too. Do 006 (deploy) right after 005
+(password gate) is next; 008 needs it too. 011 (snapshot ingestion) has its
+dependencies done and can run in parallel with 005. Do 006 (deploy) right after 005
 because of the SWA preview risk below.
 
 **Owner action needed (before or during 006):** create the Neon Free
@@ -92,8 +94,8 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - **Day boundary for the daily job (011/013):** pass the client the trading
   date (the UTC date at 22:30 UTC), not "today in Berlin". During summer time
   22:30 UTC is already the next day in Berlin. Crypto's candle for that UTC
-  date is still open at 22:30, so its close is the price at fetch time, as
-  SPEC wants.
+  date is still open at 22:30, so its close is the price at fetch time
+  (ADR 010).
 - Node 22 is pinned (ADR 005), but it hasn't been confirmed that SWA's managed
   backend runs it. Check in ticket 006, and drop to Node 20 if needed.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
