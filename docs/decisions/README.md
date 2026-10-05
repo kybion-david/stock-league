@@ -27,3 +27,4 @@ What gets easier, what gets harder, what we gave up.
 | # | Title | Status |
 |---|---|---|
 | 001 | [Proposed tech stack](001-proposed-tech-stack.md) | Proposed |
+| 002 | [Ledger, shared password, free hosted DB](002-ledger-shared-password-db.md) | Accepted |
