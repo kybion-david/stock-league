@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 010 done: market-data client).
+session; update at the end of every change. Last updated: 2026-10-05 (Neon provisioned and migrated; ticket 010 done: market-data client).
 
 ## Current state
 
@@ -14,10 +14,14 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 010
   password gate yet.
 - **Database schema done (ticket 004, ADR 008):** five tables in
   `db/migrations/001_initial_schema.sql`, a migration runner
-  (`npm run db:migrate`) and a dev seed (`npm run db:seed`). It has been
-  verified on PGlite only (in tests, and the CLI against a PGlite socket
-  server), **not on Neon**: no Neon project exists yet. No page reads the
-  database yet.
+  (`npm run db:migrate`) and a dev seed (`npm run db:seed`). No page reads
+  the database yet.
+- **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
+  (Frankfurt), Postgres 17. Branch `production` is the real database, and
+  `dev` is branched from it for local work and seed data. Migration 001 is
+  applied on both, and `dev` is seeded. The production pooled string is in
+  the GitHub secret `DATABASE_URL`, and the dev string is in the owner's
+  local `.env`. Never seed `production`.
 - **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
   `replay` (cash and holdings on any date) and `validate` (create, edit or
   delete, re-checked over the whole ledger at end of each day). It's pure
@@ -53,10 +57,12 @@ lowest number whose dependencies are done. 001–004, 007 and 010 are done. 005
 dependencies done and can run in parallel with 005. Do 006 (deploy) right after 005
 because of the SWA preview risk below.
 
-**Owner action needed (before or during 006):** create the Neon Free
-project in an EU region, put its pooled connection string in `.env` as
-`DATABASE_URL` (and later in GitHub/SWA secrets), then run
-`npm run db:migrate`. Agents can't create the Neon account.
+**Owner action pending:** set `SITE_PASSWORD` and `DATABASE_URL` (the production
+pooled string) as SWA app settings on `swa-stock-league`. An attempt on
+2026-10-05 stored a literal placeholder as `SITE_PASSWORD`. Optionally, reset
+the Neon `neondb_owner` password, which was shared in an agent chat, then
+update `.env` and the GitHub secret. The `.env` file isn't shared between
+worktrees: copy it from the main checkout when a task needs the database.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
@@ -79,8 +85,6 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 
 - Hybrid Next.js on Azure SWA is in **preview** (ADR 004). Ticket 006 should
   deploy early; if it blocks, switch to Vercel Hobby with a new ADR.
-- Migrations have only run on PGlite (Postgres 17), never on Neon. The first
-  `npm run db:migrate` against Neon is the real check.
 - Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
   needed before launch (ticket 019).
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
