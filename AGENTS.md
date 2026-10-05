@@ -34,6 +34,7 @@ need. If something looks under-engineered, that may be intentional — check
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
 | `src/app/` | Next.js App Router pages and layouts. |
 | `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. `src/lib/db/` holds the database client, migration runner and seed (ADR 008). |
+| `src/proxy.ts` | Password gate in front of every page and API route (ADR 006). |
 | `db/migrations/` | Numbered SQL migrations. Add new files; never edit merged ones. |
 | `scripts/` | Standalone Node scripts: `db.mts` (migrate/seed CLI). |
 | `package.json`, `*.config.*`, `tsconfig.json`, `.nvmrc` | App tooling config (ADR 005). |

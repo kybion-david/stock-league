@@ -138,8 +138,10 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   plain SQL migrations, PGlite (in-memory Postgres) for tests, and `tsx`
   to run TypeScript scripts.
 - **Daily job:** GitHub Actions scheduled workflow at 22:30 UTC.
-- **Auth:** the shared-password gate is implemented in the app (ADR 002),
-  because SWA's built-in password protection isn't on the Free plan.
+- **Auth (ADR 006):** a shared-password gate built into the app, because
+  SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
+  guards every page and API route. `/login` sets a 90-day cookie signed with
+  `SITE_PASSWORD`.
 - **Charts:** to be chosen in ticket 015.
 - **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
@@ -157,6 +159,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 
 - `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
   `route.ts` files). Keep these thin; put logic in `src/lib/`.
+- `src/proxy.ts`: the password gate (ADR 006). Next.js 16 calls
+  middleware "proxy". Its matcher must keep excluding `/.swa/`.
+- `src/app/login/`: login page and its server action.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money formatting (`money.ts`), ledger replay/validation (`ledger.ts`) and
   the market-data client (`market-data.ts`). Later: valuation.
@@ -194,6 +199,9 @@ Deploy commands come with ticket 006.
 
 Env vars are listed in `.env.example`. Document each one here once it's in use.
 
+- `SITE_PASSWORD` (required): the shared password (ADR 002, 006). If it's
+  unset, nobody can log in. Changing it logs every device out. Set it in
+  `.env` locally, and as an app setting on SWA (ticket 006).
 - `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
   connection string (host contains `-pooler`) with `sslmode=require`, as
   copied from Neon (`connect()` drops `channel_binding`, which postgres.js

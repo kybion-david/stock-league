@@ -13,8 +13,8 @@ signed cookie. If the gate is Next.js middleware, its matcher must exclude
 
 ## Acceptance criteria
 
-- [ ] Every page and API route returns the login screen or 401 without the password
-- [ ] Correct password grants access for at least 30 days on that device
-- [ ] Password comes from env/secret only; `.env.example` and SPEC → Configuration updated
-- [ ] Test covering denied vs allowed access
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Every page and API route returns the login screen or 401 without the password
+- [x] Correct password grants access for at least 30 days on that device
+- [x] Password comes from env/secret only; `.env.example` and SPEC → Configuration updated
+- [x] Test covering denied vs allowed access
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (Neon provisioned and migrated; ticket 010 done: market-data client).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 005 done: shared-password gate, ADR 006; Neon provisioned; ticket 010 done).
 
 ## Current state
 
@@ -10,8 +10,11 @@ session; update at the end of every change. Last updated: 2026-10-05 (Neon provi
 - **App scaffolded (ticket 003, ADR 005):** Next.js 16 + TypeScript +
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
-  typecheck, test and build on every PR. Nothing is deployed and there's no
-  password gate yet.
+  typecheck, test and build on every PR. Nothing is deployed yet.
+- **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
+  page to `/login` and returns 401 for `/api/*` until the shared password is
+  entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
+  locally) or nobody can log in.
 - **Database schema done (ticket 004, ADR 008):** five tables in
   `db/migrations/001_initial_schema.sql`, a migration runner
   (`npm run db:migrate`) and a dev seed (`npm run db:seed`). No page reads
@@ -52,10 +55,10 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–004, 007 and 010 are done. 005
-(password gate) is next; 008 needs it too. 011 (snapshot ingestion) has its
-dependencies done and can run in parallel with 005. Do 006 (deploy) right after 005
-because of the SWA preview risk below.
+lowest number whose dependencies are done. 001–005, 007 and 010 are done.
+006 (deploy) is next, because of the SWA preview risk below. It must check
+that `/.swa/` stays reachable through the proxy. 008 (players and
+instruments) and 011 (snapshot ingestion) are unblocked too.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
@@ -72,7 +75,7 @@ because of the SWA preview risk below.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -111,3 +114,5 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).
+- The password gate's only brute-force protection is a 1 s delay per wrong
+  attempt (ADR 006). Use a password that isn't trivially guessable.
