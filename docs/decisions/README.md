@@ -40,3 +40,4 @@ What gets easier, what gets harder, what we gave up.
 | 012 | [Snapshot ingestion: a row for every day, carry-forward, keep going on failure](012-snapshot-ingestion.md) | Accepted |
 | 013 | [Transaction entry: pick-a-name audit label, hard delete, no future dates](013-transaction-entry.md) | Accepted |
 | 014 | [Valuation: exact cents, last known price, average cost](014-valuation.md) | Accepted |
+| 015 | [Daily job: GitHub Actions cron, date counted back 6 hours, one retry](015-daily-ingest-job.md) | Accepted |
