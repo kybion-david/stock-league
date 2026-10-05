@@ -59,6 +59,12 @@ Confirmed with the project owner (2026-10-05):
    - Daily movers: best and worst day, for fun.
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
+6. **Players and instruments** (`/players`, `/instruments`): anyone can add
+   or rename players (name, optional emoji) and add instruments. An instrument
+   is added by its Yahoo symbol alone: it's checked with Yahoo, which also
+   supplies name, type, currency and exchange. Name, type, currency and
+   exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
+   names and symbols are rejected. Nothing can be deleted.
 
 Nice-to-have (not MVP): prizes/penalties display, fun badges/titles,
 notifications to a group chat, "what if everyone bought the S&P 500"
@@ -164,15 +170,20 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/proxy.ts`: the password gate (ADR 006). Next.js 16 calls
   middleware "proxy". Its matcher must keep excluding `/.swa/`.
 - `src/app/login/`: login page and its server action.
-- `src/app/_components/`: shared client components (`_` keeps the folder
-  out of routing). `SubmitButton` gives any server-action form a pending
-  state.
+- `src/app/_components/`: shared components and helpers (`_` keeps the
+  folder out of routing). `SubmitButton` gives any server-action form a
+  pending state; `ui.tsx` has the page shell (`Page`), `Field` and
+  `FormMessage`; `form-state.ts` is the `useActionState` result shape.
+- `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
+  pages, their server actions (`actions.ts`) and client forms.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
-  money formatting (`money.ts`), ledger replay/validation (`ledger.ts`) and
-  the market-data client (`market-data.ts`). Later: valuation.
+  money formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
+  the market-data client (`market-data.ts`), and player and instrument data
+  access (`players.ts`, `instruments.ts`). Later: valuation.
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
-  (`pglite.ts`), the migration runner and the dev seed.
+  (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
+  (`InputError`, `isUniqueViolation`, `parseId`).
 - `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
   one that has been merged; add a new file instead.
 - `scripts/`: standalone Node scripts. `db.mts` is the database CLI.
@@ -262,6 +273,11 @@ Where production values live (ADR 009); never in git:
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
   renders `€1,234.56`.
 - Import from `src` with the `@/` alias (`@/lib/money`).
+- Forms that can fail use `useActionState`. The lib function throws
+  `InputError` (`@/lib/db/errors`) with a message for the user, and the
+  action turns it into `{ error, values }` (`inputErrorState`) so the form
+  shows the error and keeps what was typed. Never call `redirect()` inside
+  that `try`: it works by throwing.
 - Every form that submits to a server action uses `SubmitButton`
   (`@/app/_components/submit-button`), so a slow request (cold start) shows a
   spinner instead of looking dead.
