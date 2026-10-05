@@ -89,9 +89,10 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 013
   manual trigger that takes an optional date. It passes the UTC date of 6
   hours before the run (so a late run still gets the right day), retries
   once after 10 minutes, and a failed run shows red in Actions and emails
-  whoever last edited the cron line. First production run: pending (it can
-  only be started once the workflow is on `main`). Until trades exist it
-  stores nothing ("0 prices, 0 FX rates").
+  whoever last edited the cron line. Verified in production on 2026-10-05:
+  a manual run for 2026-10-04 (run 37361561246) connected to Neon and
+  reported "0 prices, 0 FX rates", as expected with no trades yet. The
+  first scheduled run is 2026-10-05 22:30 UTC.
 - **Valuation done (ticket 012, ADR 014):** `src/lib/valuation.ts` values
   every player on any day from the ledger and snapshots: cash, holdings in
   EUR, return, day change, per-holding gain (average cost) and realized
