@@ -16,7 +16,7 @@ tooling and deploy knowledge consistent.
 ## Decision (proposed)
 
 - **App:** Next.js (App Router) + TypeScript, mobile-first.
-- **Charts:** a lightweight React chart library (pick in ticket 006).
+- **Charts:** a lightweight React chart library (pick in ticket 015).
 - **Daily job:** GitHub Actions scheduled workflow (`cron`) that fetches prices
   and FX and writes snapshots.
 - **Hosting:** Azure Static Web Apps (Free tier), deployed from GitHub Actions,

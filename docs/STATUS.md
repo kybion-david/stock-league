@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (owner answered open questions).
+session; update at the end of every change. Last updated: 2026-10-05 (backlog split into 18 single-session tickets).
 
 ## Current state
 
@@ -21,9 +21,17 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 ## Next up
 
-1. Ticket `001` — confirm stack and scaffold the app.
-2. Ticket `002` — pick the market data source (research).
-3. Then `003` → `007` in order (see `tickets/backlog/`).
+The backlog has 18 tickets (`tickets/backlog/`), each sized for one AI
+session. Do the lowest number whose dependencies are done. 001 and 002 are
+research and can run in parallel.
+
+**Milestone A: must be live by 2026-11-01** (trades can be entered, prices
+are captured daily from day one):
+001, 002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 018.
+014 (leaderboard) is strongly wanted for launch too.
+
+**Milestone B: shortly after launch** (history accumulates meanwhile):
+015, 016, 017.
 
 ## Open questions (ask the project owner, don't guess)
 
