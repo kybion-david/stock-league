@@ -6,9 +6,10 @@
 ## Description
 
 Protect the whole site (pages and API) with one shared password
-(`SITE_PASSWORD`, ADR 002). Use the hosting provider's built-in protection if
-001 found it to be free; otherwise build a simple login page that sets a
-long-lived signed cookie.
+(`SITE_PASSWORD`, ADR 002). Azure SWA Free has no built-in password
+protection (ADR 004), so build a simple login page that sets a long-lived
+signed cookie. If the gate is Next.js middleware, its matcher must exclude
+`/.swa/*`, or SWA's deployment health check fails (ADR 004).
 
 ## Acceptance criteria
 

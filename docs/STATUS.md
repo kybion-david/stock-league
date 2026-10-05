@@ -27,7 +27,7 @@ now unblocked. 002 (market data) is independent.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-~~001~~, 002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
