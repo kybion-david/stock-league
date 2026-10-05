@@ -46,3 +46,12 @@ session table and no new env vars.
 - Matcher tests use `unstable_doesMiddlewareMatch` from
   `next/experimental/testing/server`. In Next 16.3 the docs call it
   `unstable_doesProxyMatch`, but the package doesn't export that name yet.
+
+## Amendment (2026-10-05): sliding expiry
+
+A cookie set once for 90 days logged out every player who logged in before
+the 2026-11-01 kick-off in early January, mid-game (found in the season
+simulation, STATUS). The proxy now re-issues the cookie for another 90
+days when a valid one is more than a day old (`sessionNeedsRenewal`), so it
+only expires after 90 days without a visit. Cookie settings live in
+`sessionCookieOptions()` for both the login and the renewal.

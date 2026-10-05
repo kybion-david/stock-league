@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -178,6 +178,35 @@ session; update at the end of every change. Last updated: 2026-10-05 (user-flow 
   are now unique regardless of case. The player page names the price day
   like the home page. Yahoo was unreachable from the test machine, so only
   the "couldn't reach Yahoo" path of adding an instrument was tried.
+- **Season simulation with three personas (2026-10-05, branch `testing`):**
+  the production build ran under a faked server clock, with a fake Yahoo
+  and Frankfurter giving deterministic prices (weekends, US/EU/UK
+  holidays, GBp listing, ECB days). Three personas used separate phones
+  from setup on 2026-10-05 to 2027-04-06: Anna (careful ETF saver, comma
+  decimals, separate fees, edits), Ben (crypto, dark mode, 8-decimal
+  shares, cash at −€50, sell-out, delete, rename) and Chloé (US/UK stocks,
+  next-morning and backdated entries, dividends, partial sell). The daily
+  job ran as the workflow does, at 22:30 UTC every night, plus a Yahoo
+  outage and a manual re-run, a run starting at 01:15 UTC, a late joiner,
+  Thanksgiving, Christmas, New Year, Easter and both DST switches. Values
+  were checked against the fake prices by hand (GBp → GBP → EUR included).
+  Fixed:
+  - **The daily job failed every weekend and holiday** (red run, no
+    carried rows, ⏳ notes for everyone). Under `tsx` the CLI loads two
+    copies of `market-data.ts`, so `instanceof NoDataError` missed the
+    client's errors. Unit tests run in one module graph and couldn't see
+    it. Now checked by name too (`isNoDataError`).
+  - **Late-entered buys never got prices** for the days already ingested:
+    they counted at cost there, and their first price landed as one big
+    day change (and could top the best/worst day records). The daily job
+    now fills rows still missing on the 7 days before its date (ADR 012).
+  - **Everyone was logged out in early January**, 90 days after logging
+    in before kick-off. The session now renews itself on visits (ADR 006).
+  - **A trade tab left open overnight kept yesterday's date** and saved
+    the next trade on the wrong day. The add form's date now moves to the
+    new day when the page is shown again, unless the player picked a date.
+  - Adding `^GSPC` said `"^GSPC" is a INDEX, …`; now "is an index on
+    Yahoo, not a stock, ETF or crypto."
 - **Daily backup done (ticket 019, ADR 017):** `.github/workflows/daily-backup.yml`
   dumps production at 03:17 UTC, restores the dump into a throwaway
   Postgres 18 in the same run to prove it works, and keeps it as an
@@ -229,6 +258,12 @@ are captured daily from day one):
 
 1. **End date** of the game. Not blocking: the app runs open-ended until it's set.
 2. **Prizes/penalties:** to be defined later. Not needed for the MVP.
+3. **Trades dated before 2026-11-01:** the app accepts them, so an early
+   buy's gain or loss before kick-off counts (it shows on the pre-game
+   line-up and in "best/worst pick"). 2026-11-01 is a Sunday, so stock and
+   ETF buyers can only buy on Fri 30 Oct or Mon 2 Nov. Should trades before
+   kick-off be refused, or the early days be ignored? Found in the season
+   simulation; not changed.
 
 Answered on 2026-10-05 (now in `docs/SPEC.md` → Game rules, and ADR 002):
 start date, winner rule, entry method, allowed instruments, currency,

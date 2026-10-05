@@ -49,12 +49,16 @@ Confirmed with the project owner (2026-10-05):
    Every add or edit stores who ("Entered by", a player's name picked on the
    form) and when, so mistakes can be traced. Deletes are permanent and
    leave no trace. Every change is checked against the player's whole
-   ledger (see *Data model*). Dates can't be in the future. Amounts are the
+   ledger (see *Data model*). Dates can't be in the future. The add form's
+   date starts at today and moves on to the new day if the page is left
+   open past midnight, unless the player picked a date. Amounts are the
    EUR total without broker fees; fees are entered as their own fee
    transactions.
 2. **Daily price ingestion:** once a day, after US market close, fetch closing
    prices for every instrument held by anyone, plus EUR FX rates, and store
    them as history. Crypto trades 24/7, so it uses the price at fetch time.
+   Each run first fills rows still missing on the 7 days before (a buy
+   entered the next morning or backdated), so those days get real prices.
 3. **Valuation (ADR 014, `src/lib/valuation.ts`):** for each player and day,
    value = cash + Σ(shares held × close price in EUR).
    Return % = (value − €1,000) / €1,000. Day change = value − the previous
@@ -161,7 +165,9 @@ from it, never stored as the source of truth. Postgres tables, created by
   those prices are in. Weekends and holidays carry the last close forward
   (and the ECB's last published rate), so a missing row means a failed
   fetch, not a closed market. Rows are upserted: re-running a day updates
-  it, and a failed symbol leaves its stored row alone.
+  it, and a failed symbol leaves its stored row alone. `fillGaps` adds
+  rows still missing on the 7 days before a run's date (late-entered
+  trades, a failed day) without re-fetching stored ones.
 - **`schema_migrations`:** applied migration file names (managed by the
   migration runner).
 
@@ -209,7 +215,8 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
-  `SITE_PASSWORD`.
+  `SITE_PASSWORD`, and the proxy renews it on visits once it's a day old,
+  so active players stay logged in.
 - **Charts (ADR 018):** no library. Plain SVG laid out by `src/lib/chart.ts`.
 - **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
@@ -301,7 +308,8 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   today's **UTC** date. `npm run ingest -- 2026-11-06` does one date, and
   `npm run ingest -- 2026-11-01 2026-11-30` backfills a range (inclusive).
   Safe to re-run. Every symbol is attempted, and the exit code is 1 if any
-  failed (ADR 012).
+  failed (ADR 012). Before the first date it fills rows still missing on
+  the 7 days before it.
 - **Run the daily job by hand** (to redo or fill a day in production):
   `gh workflow run daily-ingest -f date=2026-11-06`, or *Run workflow* on
   the Actions tab. Without a date it ingests the UTC date 6 hours ago, so

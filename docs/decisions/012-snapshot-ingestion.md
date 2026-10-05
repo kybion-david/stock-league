@@ -47,3 +47,20 @@ schema (ADR 008) and the client (ADR 010) left a few questions open:
   ~20 instruments that's well under a minute.
 - A range backfill re-fetches old closes, which Yahoo has split-adjusted
   (STATUS → Known issues).
+
+## Amendment (2026-10-05): fill gaps from the week before
+
+The season simulation (STATUS) showed that players often enter a trade the
+next morning or backdate it, after that day's run. Nothing ever fetched
+the missed days, so the holding counted at cost there and its first price
+landed as one big day change. Each CLI run now first calls `fillGaps`: for
+the 7 days before its first date, oldest first, it adds the price rows of
+held instruments and the FX rows that are still **missing**. Stored rows
+are never re-fetched, so a split after the day can't rewrite them (STATUS
+→ Known issues). Older gaps still need `npm run ingest -- <from> <to>`.
+
+The same simulation found that only carry-forward on `NoDataError` had
+never worked from the CLI: under `tsx`, the script and `ingest.ts` load two
+copies of `market-data.ts`, so `instanceof` failed and every weekend and
+holiday was reported as failed. Errors are now recognised by name too
+(`isNoDataError`).
