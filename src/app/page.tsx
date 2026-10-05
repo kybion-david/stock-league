@@ -67,6 +67,12 @@ export default async function Home() {
           ✍️ Enter trades
         </Link>
         <Link
+          href="/stats"
+          className="col-span-2 rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          🎲 Fun stats
+        </Link>
+        <Link
           href="/players"
           className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
         >

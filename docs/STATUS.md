@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 017 done: fun stats at `/stats`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -115,6 +115,15 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 014
   notes, spoon, truncated name), and a pre-game database with players only.
   Not yet seen on the live site with real data. Trades entered today show
   on it only after tonight's run.
+- **Fun stats done (ticket 017, ADR 019):** `/stats` (linked from the
+  home page as "Fun stats") shows, for the leaderboard's day, today's top
+  gainer and biggest loser, hottest and coldest pick, best and worst single
+  day (from day 2), best and worst pick of the game and the fee champion.
+  Anything that doesn't apply yet shows "n/a"; before 2026-11-01 the page
+  just says when stats start. Logic in `src/lib/stats.ts`, unit-tested with
+  hand-calculated seed numbers on PGlite. Checked on 2026-10-05 with
+  Playwright at 375 px (light and dark, no horizontal scroll) against a
+  local Postgres: the seed, and a one-day database (n/a states).
 
 ## Deadline
 
@@ -125,9 +134,9 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–014 are done.
+lowest number whose dependencies are done. 001–014 and 017 are done.
 Next: 019 (backups, needed before launch), then 018 (launch readiness).
-After launch: 015 (chart, `playerSeries`), 016, 017. In the first days after 2026-11-01, check the
+After launch: 015 (chart, `playerSeries`), 016. In the first days after 2026-11-01, check the
 `daily-ingest` runs in the Actions tab: ingestion only fetches instruments
 that someone holds, so those are the first runs that really fetch prices.
 
@@ -149,7 +158,7 @@ are captured daily from day one):
 004, 006, 007, 008, 009, 010, 011, 012, 013, 014, 019, 018. Open: 019, 018.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
-015, 016, 017.
+015, 016, 017. Open: 015, 016.
 
 ## Open questions (ask the project owner, don't guess)
 
