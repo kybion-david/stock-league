@@ -32,6 +32,7 @@ need. If something looks under-engineered, that may be intentional — check
 | `tickets/` | Work items. `backlog/` = open, `done/` = finished. Format: `tickets/TEMPLATE.md`. |
 | `.github/` | PR template and CI (incl. the docs-check workflow). |
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
+| `scripts/` | Standalone Node scripts (currently the market-data proof of concept from ADR 003). |
 
 No application code exists yet. When it does, add its folders to this map
 **and** to the Structure section of `docs/SPEC.md`.

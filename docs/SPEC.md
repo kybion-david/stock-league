@@ -102,21 +102,31 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Auth:** the shared-password gate is implemented in the app (ADR 002),
   because SWA's built-in password protection isn't on the Free plan.
 - **Charts:** to be chosen in ticket 015.
-- **Market data:** to be chosen in ticket 002.
+- **Market data (ADR 003):** Yahoo Finance chart API for stock, ETF and
+  crypto prices and for symbol search. Frankfurter (ECB reference rates) for
+  FX to EUR. Both are keyless and free.
 
 ## Structure
 
-Nothing beyond docs and agent tooling yet. See the repo map in `AGENTS.md`.
+No application code yet. See the repo map in `AGENTS.md`.
 Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
 the main checkout; see `AGENTS.md` → Session workflow.
 
+- `scripts/`: standalone Node scripts. `poc-market-data.mjs` is the ADR 003
+  proof of concept and can be deleted once ticket 010 exists.
+
 ## Commands
 
-None yet. Add install, dev, test, build and deploy commands here once they exist.
+- `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (Node 18+,
+  no install). Prints AAPL, SAP.DE and EUR/USD for that date.
+
+Add install, dev, test, build and deploy commands here once they exist.
 
 ## Configuration
 
 Env vars are listed in `.env.example`. Document each one here once it's in use.
+
+Market data needs no env vars: both sources are keyless (ADR 003).
 
 ## Conventions
 
@@ -124,4 +134,7 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   and crypto quantities are allowed).
 - "Game days" are dates in `Europe/Berlin`. A day's snapshot is taken after
   the US close of that day. Store timestamps in UTC.
+- `Instrument.symbol` is the **Yahoo Finance symbol**: `AAPL` (US), `SAP.DE`
+  (Xetra), `IWDA.AS` (Euronext Amsterdam), `BTC-EUR` (crypto, quoted in EUR).
+  Find symbols with Yahoo's search (ADR 003).
 - More to be added with the scaffold.

@@ -28,4 +28,5 @@ What gets easier, what gets harder, what we gave up.
 |---|---|---|
 | 001 | [Proposed tech stack](001-proposed-tech-stack.md) | Superseded by 004 |
 | 002 | [Ledger, shared password, free hosted DB](002-ledger-shared-password-db.md) | Accepted |
+| 003 | [Market data: Yahoo Finance + ECB/Frankfurter](003-market-data-source.md) | Accepted |
 | 004 | [Hosting on Azure SWA Free, database on Neon Free](004-hosting-and-database.md) | Accepted |

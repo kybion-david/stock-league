@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 001 done: hosting and database chosen; one-worktree-per-task workflow added).
+session; update at the end of every change. Last updated: 2026-10-05 (tickets 001 and 002 done: hosting/DB in ADR 004, market data in ADR 003; one-worktree-per-task workflow added).
 
 ## Current state
 
@@ -15,6 +15,9 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 001
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
   GitHub Actions. Nothing is provisioned yet; that happens in tickets 003, 004 and 006.
+- **Market data decided (ADR 003):** Yahoo Finance chart API (prices, crypto,
+  symbol search) + Frankfurter/ECB (FX). Keyless, so no env vars. Verified
+  with `scripts/poc-market-data.mjs` against 2026-09-30.
 
 ## Deadline
 
@@ -25,12 +28,12 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001 is done; 003 (scaffold) is
-now unblocked. 002 (market data) is independent.
+lowest number whose dependencies are done. 001 and 002 are done; 003
+(scaffold) is next.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -51,3 +54,6 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   deploy early; if it blocks, switch to Vercel Hobby with a new ADR.
 - Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
   needed before launch (ticket 019).
+- **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
+  block GitHub Actions IPs. That hasn't been tested from a runner yet: check
+  it in ticket 010, and use the fallbacks listed in ADR 003 if it fails.
