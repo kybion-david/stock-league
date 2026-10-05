@@ -30,11 +30,12 @@ need. If something looks under-engineered, that may be intentional — check
 | `docs/STATUS.md` | **Where we are**: current state, next steps, open questions, known issues. |
 | `docs/decisions/` | **Why**: numbered ADRs (`NNN-slug.md`). See `docs/decisions/README.md`. |
 | `tickets/` | Work items. `backlog/` = open, `done/` = finished. Format: `tickets/TEMPLATE.md`. |
-| `.github/` | PR template and CI workflows (`ci` = lint/typecheck/test/build, `docs-check`). |
+| `.github/` | PR template and workflows (`ci` = lint/typecheck/test/build, `deploy` = deploy `main` to Azure, `docs-check`). |
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
 | `src/app/` | Next.js App Router pages and layouts. |
 | `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. |
-| `scripts/` | Standalone Node scripts (currently the market-data proof of concept from ADR 003). |
+| `scripts/` | Standalone Node scripts (market-data proof of concept from ADR 003, standalone-build asset copy). |
+| `infra/` | Terraform for the Azure Static Web App (ADR 009). |
 | `package.json`, `*.config.*`, `tsconfig.json`, `.nvmrc` | App tooling config (ADR 005). |
 
 When you add folders, add them to this map **and** to the Structure section

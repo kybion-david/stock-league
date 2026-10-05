@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 007 done: ledger replay and validation, ADR 007).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 006: Azure SWA provisioned, deploy on merge to `main`, ADR 009).
 
 ## Current state
 
@@ -10,8 +10,13 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 007
 - **App scaffolded (ticket 003, ADR 005):** Next.js 16 + TypeScript +
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
-  typecheck, test and build on every PR. Nothing is deployed and there's no
-  database or password gate yet.
+  typecheck, test and build on every PR.
+- **Deploy pipeline (ticket 006, ADR 009):** `swa-stock-league` (SWA Free,
+  `rg-stock-league`, Kybion Production subscription) is provisioned with
+  Terraform (`infra/`; state in `~/.stock-league/` on the owner's machine).
+  `.github/workflows/deploy.yml` deploys every push to `main`. The build is
+  `output: "standalone"` (~50 MB, under SWA's 250 MB limit).
+  **Live URL:** https://orange-grass-0fb3e1803.4.azurestaticapps.net
 - **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
   `replay` (cash and holdings on any date) and `validate` (create, edit or
   delete, re-checked over the whole ledger at end of each day). It's pure
@@ -24,7 +29,7 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 007
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
-  GitHub Actions. Nothing is provisioned yet; that happens in tickets 004 and 006.
+  GitHub Actions. The SWA exists (ticket 006); Neon comes with ticket 004.
 - **Market data decided (ADR 003):** Yahoo Finance chart API (prices, crypto,
   symbol search) + Frankfurter/ECB (FX). Keyless, so no env vars. Verified
   with `scripts/poc-market-data.mjs` against 2026-09-30.

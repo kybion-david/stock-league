@@ -29,5 +29,6 @@ npm run dev     # http://localhost:3000
 ```
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
-is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
-page so far; see [`docs/STATUS.md`](docs/STATUS.md).
+is in [`docs/SPEC.md`](docs/SPEC.md) → Commands, including how deploys work
+(every merge to `main` goes live). The live URL and the current state are in
+[`docs/STATUS.md`](docs/STATUS.md).

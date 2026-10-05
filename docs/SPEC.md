@@ -101,7 +101,9 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   lint, typecheck, test and build on every PR (`.github/workflows/ci.yml`).
 - **Hosting:** Azure Static Web Apps, **Free** plan, with hybrid Next.js
   rendering (server components and API routes on SWA's managed backend).
-  Deployed from GitHub Actions. Fallback if needed: Vercel Hobby.
+  Built as `output: "standalone"` to stay under SWA's 250 MB limit.
+  Provisioned with Terraform (`infra/`) and deployed from GitHub Actions on
+  every merge to `main` (ADR 009). Fallback if needed: Vercel Hobby.
 - **Database:** Neon Free (serverless Postgres), EU region. Connected with
   `DATABASE_URL` from the app and from the daily job.
 - **Daily job:** GitHub Actions scheduled workflow at 22:30 UTC.
@@ -125,7 +127,11 @@ the main checkout; see `AGENTS.md` → Session workflow.
   Later: valuation and market-data clients.
 - `scripts/`: standalone Node scripts. `poc-market-data.mjs` is the ADR 003
   proof of concept and can be deleted once ticket 010 exists.
-- `.github/workflows/`: `ci.yml` (checks) and `docs-check.yml`.
+  `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
+- `infra/`: Terraform for the Azure resource group and Static Web App
+  (ADR 009). State is kept outside the repo.
+- `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
+  Azure SWA) and `docs-check.yml`.
 
 ## Commands
 
@@ -136,17 +142,45 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - `npm run lint`: ESLint.
 - `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
 - `npm test`: Vitest, run once (`npm run test:watch` to watch).
-- `npm run build` / `npm start`: production build and serve.
+- `npm run build` / `npm start`: production build (standalone, ADR 009)
+  and serve it at http://localhost:3000.
 - `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (no
   install). Prints AAPL, SAP.DE and EUR/USD for that date.
 
-Deploy commands come with ticket 006.
+### Deploy (ADR 009)
+
+- **Normal deploys are automatic:** every push to `main` (every merged PR)
+  runs `.github/workflows/deploy.yml`. Re-run it by hand with
+  `gh workflow run deploy`.
+- **Infra changes** (rare, by the owner, logged in with `az login`):
+
+  ```sh
+  cd infra
+  export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+  terraform init -backend-config="path=$HOME/.stock-league/terraform.tfstate"
+  terraform plan    # then: terraform apply
+  ```
+
+- **Set or change a runtime secret:**
+  `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league --setting-names NAME=value`.
+- **Deploy token:** after a rotation (`az staticwebapp secrets reset-api-key
+  -n swa-stock-league -g rg-stock-league`), store
+  `terraform output -raw api_key` as the `AZURE_STATIC_WEB_APPS_API_TOKEN`
+  GitHub secret.
 
 ## Configuration
 
 Env vars are listed in `.env.example`. Document each one here once it's in use.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
+
+Where production values live (ADR 009); never in git:
+
+- **SWA app settings** (runtime env for the live app): `SITE_PASSWORD`, and
+  `DATABASE_URL` once the app uses the database.
+- **GitHub Actions secrets:** `AZURE_STATIC_WEB_APPS_API_TOKEN` (SWA
+  deployment token, used by `deploy.yml`).
+- **Owner's machine:** Terraform state at `~/.stock-league/terraform.tfstate`.
 
 ## Conventions
 

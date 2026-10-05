@@ -32,3 +32,4 @@ What gets easier, what gets harder, what we gave up.
 | 004 | [Hosting on Azure SWA Free, database on Neon Free](004-hosting-and-database.md) | Accepted |
 | 005 | [App tooling: Node 22, Tailwind, ESLint, Vitest](005-app-tooling.md) | Accepted |
 | 007 | [Ledger validation: end-of-day checks, exact shares](007-ledger-validation-rules.md) | Accepted |
+| 009 | [Deploy pipeline: Terraform once, token deploy on merge](009-deploy-pipeline.md) | Accepted |
