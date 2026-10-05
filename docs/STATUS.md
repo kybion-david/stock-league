@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (agents now merge their own PRs once CI is green; ticket 003 done: Next.js app scaffolded, ADR 005).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 005 done: shared-password gate, ADR 006).
 
 ## Current state
 
@@ -11,7 +11,11 @@ session; update at the end of every change. Last updated: 2026-10-05 (agents now
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
   typecheck, test and build on every PR. Nothing is deployed and there's no
-  database or password gate yet.
+  database yet.
+- **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
+  page to `/login` and returns 401 for `/api/*` until the shared password is
+  entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
+  locally) or nobody can log in.
 - Agents work in one git worktree per task. They merge their own PR once CI
   is green, then remove the worktree (`AGENTS.md` → Session workflow; the
   owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
@@ -33,14 +37,15 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–003 are done; 004
-(database schema and seed) is next. 005 (password gate) also only needs 003,
-so it can run in parallel. Do 006 (deploy) right after 005 because of the
-SWA preview risk below.
+lowest number whose dependencies are done. 001–003 and 005 are done; 004
+(database schema and seed) is in progress on `feat/db-schema`. 006 (deploy)
+is unblocked and should go next, because of the SWA preview risk below. It
+must set `SITE_PASSWORD` as an SWA app setting and check that `/.swa/` stays
+reachable through the proxy.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -69,3 +74,5 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).
+- The password gate's only brute-force protection is a 1 s delay per wrong
+  attempt (ADR 006). Use a password that isn't trivially guessable.

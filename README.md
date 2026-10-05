@@ -24,10 +24,11 @@ everyone can see how they're doing compared to each other.
 Needs Node 22 (`nvm use`).
 
 ```sh
+cp .env.example .env   # then set SITE_PASSWORD
 npm install
 npm run dev     # http://localhost:3000
 ```
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
 is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
-page so far; see [`docs/STATUS.md`](docs/STATUS.md).
+page behind the password gate so far; see [`docs/STATUS.md`](docs/STATUS.md).
