@@ -34,7 +34,7 @@ Confirmed with the project owner (2026-10-05):
 - **Currency:** everything is shown in **EUR**. Non-EUR instruments are
   converted with a daily end-of-day FX rate. Approximately right is good
   enough.
-- **Tracking:** values update **once a day, after the US market closes**.
+- **Tracking:** values update **once a day at 22:30 UTC**, after the US market closes.
 - **Goal:** a dashboard where everyone can see how they're doing and how they
   compare. It should be fun, not a professional finance tool.
 

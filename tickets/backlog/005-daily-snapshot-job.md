@@ -7,8 +7,8 @@
 
 Run the ingestion automatically once a day, e.g. as a GitHub Actions cron job,
 **after the US market closes** (owner decision). US close is 20:00 UTC in US
-summer time and 21:00 UTC in winter. A fixed UTC time such as ~22:30 UTC
-covers both; document the chosen time. A failed run must be visible: the Action fails, and optionally
+summer time and 21:00 UTC in winter. The job runs at **22:30 UTC**
+(owner-confirmed 2026-10-05), which covers both. A failed run must be visible: the Action fails, and optionally
 notifies.
 
 ## Acceptance criteria
