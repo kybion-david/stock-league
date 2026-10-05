@@ -63,6 +63,16 @@ export class UnsupportedInstrumentError extends MarketDataError {}
 /** The symbol exists but has no price for that date (weekend, holiday, not listed yet). */
 export class NoDataError extends MarketDataError {}
 
+/**
+ * True for a `NoDataError`, checked by name as well as by class: under `tsx`
+ * (the ingest CLI) the ESM script and the CJS modules it imports load two
+ * copies of this file, so `instanceof` alone misses the other copy's errors
+ * and every weekend failed instead of carrying the last close forward.
+ */
+export function isNoDataError(err: unknown): boolean {
+  return err instanceof NoDataError || (err instanceof Error && err.name === "NoDataError");
+}
+
 /** The ECB doesn't publish a rate for this currency. */
 export class UnknownCurrencyError extends MarketDataError {}
 

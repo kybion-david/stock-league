@@ -3,7 +3,7 @@
 // fx_snapshots. Idempotent per day; one failure never stops the run.
 import type { Db } from "@/lib/db/db";
 import { replay, type LedgerTransaction } from "@/lib/ledger";
-import { NoDataError, type MarketDataClient } from "@/lib/market-data";
+import { isNoDataError, type MarketDataClient } from "@/lib/market-data";
 
 /** How far back carry-forward looks for a close (stored, then from the provider). */
 export const CARRY_FORWARD_DAYS = 10;
@@ -149,7 +149,7 @@ async function ingestPrice(
       await upsertPrice(db, instrument.id, date, close.close, close.currency);
       return { symbol, status: "fetched", close: close.close, currency: close.currency };
     } catch (err) {
-      if (!(err instanceof NoDataError)) throw err;
+      if (!isNoDataError(err)) throw err;
     }
     const last = await lastClose(db, client, instrument, date);
     if (!last) {
@@ -193,7 +193,7 @@ async function lastClose(
       const close = await client.getClose(instrument.symbol, day);
       return { close: close.close, currency: close.currency, from: day };
     } catch (err) {
-      if (!(err instanceof NoDataError)) throw err;
+      if (!isNoDataError(err)) throw err;
     }
   }
   return null;

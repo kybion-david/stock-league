@@ -213,6 +213,24 @@ describe("ingestDate", () => {
     expect((await fxRows()).map((r) => r.date)).toEqual(["2026-11-06", "2026-11-07"]);
   });
 
+  it("carries forward when the client's NoDataError comes from another copy of the module", async () => {
+    // The ingest CLI runs under tsx, where the script's client and this
+    // module load separate copies of market-data.ts (2026-11-07 simulation).
+    class NoDataError extends Error {
+      name = "NoDataError";
+    }
+    const alice = await addPlayer("Alice");
+    await trade(alice, "2026-11-02", "buy", await addInstrument("AAPL"), "1");
+    await ingestDate(db, fakeClient({ AAPL: { "2026-11-06": "231.55" } }).client, "2026-11-06");
+    const { client } = fakeClient({ AAPL: { "2026-11-07": new NoDataError("weekend") } });
+
+    const report = await ingestDate(db, client, "2026-11-07");
+
+    expect(report.prices).toEqual([
+      { symbol: "AAPL", status: "carried", close: "231.55", currency: "EUR", from: "2026-11-06" },
+    ]);
+  });
+
   it("walks back with the client when nothing is stored yet", async () => {
     const alice = await addPlayer("Alice");
     await trade(alice, "2026-11-01", "buy", await addInstrument("SAP.DE"), "1");
