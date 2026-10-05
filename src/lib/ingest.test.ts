@@ -244,16 +244,28 @@ describe("ingestDate", () => {
     expect(await prices()).toEqual([]);
   });
 
-  it("keeps a real close for the day when a re-run finds no data", async () => {
+  it("re-running a carried day picks up a corrected close from the day before", async () => {
     const alice = await addPlayer("Alice");
     await trade(alice, "2026-11-02", "buy", await addInstrument("SAP.DE"), "1");
-    await ingestDate(db, fakeClient({ "SAP.DE": { "2026-11-05": "1", "2026-11-06": "2" } }).client, "2026-11-05");
-    await ingestDate(db, fakeClient({ "SAP.DE": { "2026-11-06": "2" } }).client, "2026-11-06");
+    const outage = new MarketDataError("query1.finance.yahoo.com failed after 3 retries");
+    // Friday fails, so Saturday carries Thursday's close.
+    const first = fakeClient({ "SAP.DE": { "2026-11-05": "1", "2026-11-06": outage } }).client;
+    await ingestRange(db, first, "2026-11-05", "2026-11-07");
+    expect((await prices()).map((p) => [p.date, p.close])).toEqual([
+      ["2026-11-05", "1"],
+      ["2026-11-07", "1"],
+    ]);
 
-    const report = await ingestDate(db, fakeClient({ "SAP.DE": { "2026-11-05": "1" } }).client, "2026-11-06");
+    // Yahoo is back: re-running Friday and Saturday fixes both.
+    const fixed = fakeClient({ "SAP.DE": { "2026-11-05": "1", "2026-11-06": "2" } }).client;
+    const reports = await ingestRange(db, fixed, "2026-11-06", "2026-11-07");
 
-    expect(report.prices[0]).toMatchObject({ status: "carried", close: "2", from: "2026-11-06" });
-    expect((await prices()).at(-1)).toMatchObject({ date: "2026-11-06", close: "2" });
+    expect(reports[1].prices[0]).toMatchObject({ status: "carried", close: "2", from: "2026-11-06" });
+    expect((await prices()).map((p) => [p.date, p.close])).toEqual([
+      ["2026-11-05", "1"],
+      ["2026-11-06", "2"],
+      ["2026-11-07", "2"],
+    ]);
   });
 
   it("reports a failing symbol, stores the rest and keeps the old row", async () => {

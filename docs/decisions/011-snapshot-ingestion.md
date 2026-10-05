@@ -20,9 +20,9 @@ schema (ADR 008) and the client (ADR 010) left a few questions open:
 - **Every calendar day gets a row** for each held instrument and each
   non-EUR currency those closes need. On `NoDataError`, the last close is
   copied to the day (carry-forward). It comes from the database (last row
-  within 10 days, including the day's own row, so a re-run never replaces a
-  real close with an older one), or else from the client, walking back day
-  by day for up to 10 days. FX rows are stored under the day with whatever
+  in the 10 days before, so re-running a carried day after fixing an
+  earlier one picks up the fix), or else from the client, walking back day
+  by day for up to 10 days. Re-run a range oldest first to repair it. FX rows are stored under the day with whatever
   rate the ECB gives for it (its last published one on weekends). There is
   no column marking a row as carried; the run's report says so.
 - **Held** means net shares > 0 at the end of the day for some player,

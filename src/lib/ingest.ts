@@ -132,10 +132,8 @@ async function heldInstruments(db: Db, date: string): Promise<Instrument[]> {
     }
   }
   if (held.size === 0) return [];
-  return db.query<Instrument>(
-    "select id, symbol from instruments where id = any($1::int[]) order by symbol",
-    [[...held]],
-  );
+  const all = await db.query<Instrument>("select id, symbol from instruments order by symbol");
+  return all.filter((i) => held.has(i.id));
 }
 
 async function ingestPrice(
@@ -169,7 +167,7 @@ async function ingestPrice(
 }
 
 /**
- * The last close up to `date`: from the database first, else walking back
+ * The last close before `date`: from the database first, else walking back
  * day by day with the client (e.g. the first game day is a Sunday and
  * nothing is stored yet).
  */
@@ -179,10 +177,11 @@ async function lastClose(
   instrument: Instrument,
   date: string,
 ): Promise<{ close: string; currency: string; from: string } | null> {
-  // `<= date` so a re-run keeps a real close already stored for the day.
+  // Strictly before the day, so re-running a carried day picks up a
+  // corrected close from the day before.
   const [stored] = await db.query<{ close: string; currency: string; date: string }>(
     `select close, currency, date from price_snapshots
-     where instrument_id = $1 and date <= $2 and date >= $3
+     where instrument_id = $1 and date < $2 and date >= $3
      order by date desc limit 1`,
     [instrument.id, date, addDays(date, -CARRY_FORWARD_DAYS)],
   );
