@@ -80,6 +80,9 @@ from it, never stored as the source of truth. Finalize details in ticket 004.
   - `sell`: cash += amount, shares −= n (can't sell more than held)
   - `fee`: cash −= amount
   - `dividend`: cash += amount
+  - The cash and selling rules are checked at the **end of each day**, over
+    the whole ledger, on every create, edit or delete (ADR 007). Logic:
+    `src/lib/ledger.ts` (`replay`, `validate`).
 - **PriceSnapshot:** instrument, date, close price, currency.
 - **FxSnapshot:** date, currency, rate to EUR.
 
@@ -117,8 +120,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 
 - `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
   `route.ts` files). Keep these thin; put logic in `src/lib/`.
-- `src/lib/`: framework-free TypeScript (money formatting now; ledger,
-  valuation and market-data clients later), unit-tested with Vitest.
+- `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
+  money formatting (`money.ts`) and ledger replay/validation (`ledger.ts`).
+  Later: valuation and market-data clients.
 - `scripts/`: standalone Node scripts. `poc-market-data.mjs` is the ADR 003
   proof of concept and can be deleted once ticket 010 exists.
 - `.github/workflows/`: `ci.yml` (checks) and `docs-check.yml`.
@@ -146,8 +150,10 @@ Market data needs no env vars: both sources are keyless (ADR 003).
 
 ## Conventions
 
-- Money as integer euro cents; share counts as decimals (fractional shares
-  and crypto quantities are allowed).
+- Money as integer euro cents. Share counts are exact decimals with at most
+  **8 decimal places**, passed as decimal strings like `"0.5"` (Postgres
+  `numeric`). Never do share arithmetic in floats where the ledger
+  rules depend on it (ADR 007).
 - "Game days" are dates in `Europe/Berlin`. A day's snapshot is taken after
   the US close of that day. Store timestamps in UTC.
 - `Instrument.symbol` is the **Yahoo Finance symbol**: `AAPL` (US), `SAP.DE`

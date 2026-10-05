@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (agents now merge their own PRs once CI is green; ticket 003 done: Next.js app scaffolded, ADR 005).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 007 done: ledger replay and validation, ADR 007).
 
 ## Current state
 
@@ -12,6 +12,11 @@ session; update at the end of every change. Last updated: 2026-10-05 (agents now
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
   typecheck, test and build on every PR. Nothing is deployed and there's no
   database or password gate yet.
+- **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
+  `replay` (cash and holdings on any date) and `validate` (create, edit or
+  delete, re-checked over the whole ledger at end of each day). It's pure
+  and fully unit-tested, but nothing calls it yet: tickets 008/009 wire it to
+  the DB and the form. The DB `shares` column must allow 8 decimal places.
 - Agents work in one git worktree per task. They merge their own PR once CI
   is green, then remove the worktree (`AGENTS.md` → Session workflow; the
   owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
@@ -33,7 +38,7 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–003 are done; 004
+lowest number whose dependencies are done. 001–003 and 007 are done; 004
 (database schema and seed) is next. 005 (password gate) also only needs 003,
 so it can run in parallel. Do 006 (deploy) right after 005 because of the
 SWA preview risk below.
