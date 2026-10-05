@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 006: deploy pipeline merged, ADR 009; ticket 005 done: password gate, ADR 006; Neon provisioned; ticket 010 done).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 006 done: live on Azure SWA; fixed an edge-cache bypass of the password gate; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -11,12 +11,17 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 006
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
   typecheck, test and build on every PR.
-- **Deploy pipeline (ticket 006, ADR 009):** `swa-stock-league` (SWA Free,
+- **Deploy pipeline done (ticket 006, ADR 009):** `swa-stock-league` (SWA Free,
   `rg-stock-league`, Kybion Production subscription) is provisioned with
   Terraform (`infra/`; state in `~/.stock-league/` on the owner's machine).
   `.github/workflows/deploy.yml` deploys every push to `main`. The build is
   `output: "standalone"` (~50 MB, under SWA's 250 MB limit).
-  **Live URL:** https://orange-grass-0fb3e1803.4.azurestaticapps.net
+  SWA runs Node 22. **Live URL:** https://orange-grass-0fb3e1803.4.azurestaticapps.net
+  Live checks on 2026-10-05: `/.swa/` health 200, `/` redirects to `/login`
+  without a valid cookie, `/api/*` returns 401, and a cookie signed with the
+  real password gets in. They also found that SWA's edge cached the
+  prerendered `/` and served it to everyone. Fixed by forcing dynamic
+  rendering (ADR 006).
 - **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
   page to `/login` and returns 401 for `/api/*` until the shared password is
   entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
@@ -61,11 +66,8 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–005, 007 and 010 are done.
-006 (deploy) is merged. Its ticket moves to `done/` once the live checks pass
-(health check `/.swa/` reachable, redirect to `/login`, 401 on `/api/*`,
-login works). Next: 008 (players and instruments) and 011 (snapshot
-ingestion), both unblocked.
+lowest number whose dependencies are done. 001–007 and 010 are done. Next: 008 (players and instruments) and 011
+(snapshot ingestion), both unblocked.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
@@ -99,8 +101,10 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 
 ## Known issues
 
-- Hybrid Next.js on Azure SWA is in **preview** (ADR 004). Ticket 006 should
-  deploy early; if it blocks, switch to Vercel Hobby with a new ADR.
+- Hybrid Next.js on Azure SWA is in **preview** (ADR 004). The first deploy
+  works (2026-10-05), but SWA's edge caches prerendered pages past the
+  proxy, so every page must stay dynamic (ADR 006). If SWA causes more
+  trouble, switch to Vercel Hobby with a new ADR.
 - Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
   needed before launch (ticket 019).
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
@@ -116,8 +120,6 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   22:30 UTC is already the next day in Berlin. Crypto's candle for that UTC
   date is still open at 22:30, so its close is the price at fetch time
   (ADR 010).
-- Node 22 is pinned (ADR 005), but it hasn't been confirmed that SWA's managed
-  backend runs it. Check in ticket 006, and drop to Node 20 if needed.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).
