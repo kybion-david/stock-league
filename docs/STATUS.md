@@ -1,12 +1,15 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 001 done: hosting and database chosen).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 001 done: hosting and database chosen; one-worktree-per-task workflow added).
 
 ## Current state
 
 - The repository is set up with AI context (`AGENTS.md`, this file, `SPEC.md`,
   ADRs), a ticket backlog, a PR template, and a CI docs-check.
+- Agents work in one git worktree per task, removed when the PR is open
+  (`AGENTS.md` → Session workflow). A Claude Code hook blocks edits in the
+  main checkout.
 - **No application code exists yet.**
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on

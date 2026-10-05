@@ -106,7 +106,9 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 
 ## Structure
 
-Nothing beyond docs yet. See the repo map in `AGENTS.md`.
+Nothing beyond docs and agent tooling yet. See the repo map in `AGENTS.md`.
+Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
+the main checkout; see `AGENTS.md` → Session workflow.
 
 ## Commands
 
