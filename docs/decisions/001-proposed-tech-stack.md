@@ -1,6 +1,6 @@
 # 001. Proposed tech stack
 
-**Status:** Proposed (to confirm with the owner in ticket 001)
+**Status:** Superseded by 004
 **Date:** 2026-10-05
 
 ## Context

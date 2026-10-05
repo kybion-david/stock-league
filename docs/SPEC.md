@@ -89,9 +89,20 @@ gain without needing historical intraday prices.
 
 ## Tech stack
 
-**Proposed, not yet confirmed.** See ADR 001 and ADR 002. Hard constraints
-from the owner: **free hosting only** (or near-zero cost), and the app needs
-**persistent, in-app editable storage** plus a scheduled daily job.
+Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
+
+- **App:** Next.js (App Router) + TypeScript, mobile-first. Keep it plain
+  Next.js, without host-specific features, so it stays portable.
+- **Hosting:** Azure Static Web Apps, **Free** plan, with hybrid Next.js
+  rendering (server components and API routes on SWA's managed backend).
+  Deployed from GitHub Actions. Fallback if needed: Vercel Hobby.
+- **Database:** Neon Free (serverless Postgres), EU region. Connected with
+  `DATABASE_URL` from the app and from the daily job.
+- **Daily job:** GitHub Actions scheduled workflow at 22:30 UTC.
+- **Auth:** the shared-password gate is implemented in the app (ADR 002),
+  because SWA's built-in password protection isn't on the Free plan.
+- **Charts:** to be chosen in ticket 015.
+- **Market data:** to be chosen in ticket 002.
 
 ## Structure
 

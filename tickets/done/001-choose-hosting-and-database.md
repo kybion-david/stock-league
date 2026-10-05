@@ -14,7 +14,7 @@ current docs, not memory. No code in this ticket.
 
 ## Acceptance criteria
 
-- [ ] New ADR comparing at least 2 hosting and 2 DB options (free-tier limits, cold starts, built-in password protection, lock-in)
-- [ ] Owner has confirmed the choice; ADR 001 marked superseded
-- [ ] `docs/SPEC.md` → Tech stack filled in
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] New ADR (004) comparing at least 2 hosting and 2 DB options (free-tier limits, cold starts, built-in password protection, lock-in)
+- [x] Owner has confirmed the choice; ADR 001 marked superseded
+- [x] `docs/SPEC.md` → Tech stack filled in
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
