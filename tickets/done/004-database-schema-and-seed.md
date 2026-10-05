@@ -12,8 +12,8 @@ seed script with 2–3 fake players and a few transactions.
 
 ## Acceptance criteria
 
-- [ ] Migrations create all tables from scratch, and can be re-run safely
-- [ ] Money columns are integer cents; share columns support fractional quantities (crypto)
-- [ ] Seed script populates dev data
-- [ ] `docs/SPEC.md` Data model finalized (no longer conceptual); commands documented
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Migrations create all tables from scratch, and can be re-run safely
+- [x] Money columns are integer cents; share columns support fractional quantities (crypto)
+- [x] Seed script populates dev data
+- [x] `docs/SPEC.md` Data model finalized (no longer conceptual); commands documented
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

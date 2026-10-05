@@ -25,8 +25,14 @@ Needs Node 22 (`nvm use`).
 
 ```sh
 npm install
-npm run dev     # http://localhost:3000
+cp .env.example .env   # set SITE_PASSWORD, and DATABASE_URL to a dev database (e.g. a Neon branch)
+npm run db:migrate
+npm run db:seed        # optional fake players and trades
+npm run dev            # http://localhost:3000
 ```
+
+Tests don't need a database: they use an in-memory Postgres (PGlite). They
+don't call market-data APIs either; `npm run test:live` does.
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
 is in [`docs/SPEC.md`](docs/SPEC.md) → Commands, including how deploys work

@@ -13,10 +13,10 @@ calls are only allowed in an opt-in integration test; unit tests use mocks.
 
 ## Acceptance criteria
 
-- [ ] Functions for price-on-date, FX-to-EUR-on-date, symbol lookup, covering stocks, ETFs and crypto
-- [ ] **Verified from a GitHub Actions runner** (e.g. a `workflow_dispatch` that
+- [x] Functions for price-on-date, FX-to-EUR-on-date, symbol lookup, covering stocks, ETFs and crypto
+- [x] **Verified from a GitHub Actions runner** (e.g. a `workflow_dispatch` that
   runs the opt-in integration test). Yahoo may block datacenter IPs. If it
   does, switch to a fallback from ADR 003 before ticket 011.
-- [ ] Retries/backoff on rate limits; typed errors for unknown symbol / no data
-- [ ] Unit tests with mocked responses (the sources are keyless, per ADR 003; no API key needed)
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Retries/backoff on rate limits; typed errors for unknown symbol / no data
+- [x] Unit tests with mocked responses (the sources are keyless, per ADR 003; no API key needed)
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
