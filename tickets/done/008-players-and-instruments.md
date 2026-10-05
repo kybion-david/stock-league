@@ -11,8 +11,8 @@ used by the data provider, name, type stock/etf/crypto, currency). Once ticket
 
 ## Acceptance criteria
 
-- [ ] Add/edit players (name, optional emoji)
-- [ ] Add/edit instruments with type and currency
-- [ ] Duplicate symbols rejected
-- [ ] Works at phone width
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Add/edit players (name, optional emoji)
+- [x] Add/edit instruments with type and currency
+- [x] Duplicate symbols rejected
+- [x] Works at phone width
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

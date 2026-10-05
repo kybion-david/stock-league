@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatEuroCents } from "@/lib/money";
 
 const STAKE_CENTS = 100_000;
@@ -22,6 +23,20 @@ export default function Home() {
       <p className="text-sm text-foreground/60">
         The leaderboard shows up here once the game starts.
       </p>
+      <nav className="grid grid-cols-2 gap-3">
+        <Link
+          href="/players"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          👥 Players
+        </Link>
+        <Link
+          href="/instruments"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          📊 Instruments
+        </Link>
+      </nav>
     </main>
   );
 }

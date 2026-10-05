@@ -36,3 +36,4 @@ What gets easier, what gets harder, what we gave up.
 | 008 | [Database access: postgres.js, SQL migrations, PGlite tests](008-database-access-and-migrations.md) | Accepted |
 | 009 | [Deploy pipeline: Terraform once, token deploy on merge](009-deploy-pipeline.md) | Accepted |
 | 010 | [Market-data client: major-unit prices, same-day candles, live check on PRs](010-market-data-client.md) | Accepted |
+| 011 | [Instruments are added by Yahoo symbol only, and the symbol is fixed](011-instruments-from-yahoo.md) | Accepted |
