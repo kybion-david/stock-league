@@ -1,0 +1,35 @@
+# Enforces the AGENTS.md rule: any PR that changes non-doc files must also
+# update something under docs/. Bypass with the `no-docs-needed` label.
+name: docs-check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+jobs:
+  docs-updated:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-docs-needed') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require docs/ changes alongside code changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")"
+          echo "Changed files:"; echo "$changed"
+
+          # Files that don't require a docs/ update on their own
+          non_doc="$(echo "$changed" | grep -Ev '^(docs/|tickets/|AGENTS\.md$|CLAUDE\.md$|README\.md$|\.github/pull_request_template\.md$)' || true)"
+          docs="$(echo "$changed" | grep -E '^docs/' || true)"
+
+          if [ -n "$non_doc" ] && [ -z "$docs" ]; then
+            echo "::error::This PR changes code/config but nothing under docs/."
+            echo "::error::Update docs/STATUS.md (and SPEC/ADRs as needed) per AGENTS.md, or add the 'no-docs-needed' label if there is truly no doc impact."
+            exit 1
+          fi
+          echo "Docs check passed."
