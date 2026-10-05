@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 004 done: database schema, migrations and seed, ADR 008).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 004 done: database schema, migrations and seed, ADR 008; ticket 007 done: ledger logic, ADR 007).
 
 ## Current state
 
@@ -18,6 +18,11 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 004
   verified on PGlite only (in tests, and the CLI against a PGlite socket
   server), **not on Neon**: no Neon project exists yet. No page reads the
   database yet.
+- **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
+  `replay` (cash and holdings on any date) and `validate` (create, edit or
+  delete, re-checked over the whole ledger at end of each day). It's pure
+  and fully unit-tested, but nothing calls it yet: tickets 008/009 wire it to
+  the DB (map integer ids with `String()`) and the form.
 - Agents work in one git worktree per task. They merge their own PR once CI
   is green, then remove the worktree (`AGENTS.md` → Session workflow; the
   owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
@@ -39,8 +44,8 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–004 are done. 005 (password
-gate) and 007 (ledger logic) only need 003. Do 006 (deploy) right after 005
+lowest number whose dependencies are done. 001–004 and 007 are done. 005
+(password gate) is next; 008 needs it too. Do 006 (deploy) right after 005
 because of the SWA preview risk below.
 
 **Owner action needed (before or during 006):** create the Neon Free

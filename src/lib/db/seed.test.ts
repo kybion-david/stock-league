@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "./db";
+import { validate, type LedgerTransaction } from "@/lib/ledger";
 import { migrate } from "./migrate";
 import { createTestDb } from "./pglite";
 import { seed } from "./seed";
@@ -26,17 +27,37 @@ describe("seed", () => {
     }
   });
 
-  it("produces a valid ledger: cash never below −€50", async () => {
+  it("produces a ledger that passes the game rules", async () => {
     await seed(db);
-    // Running cash per player, in date order (buys and fees cost, sells and dividends pay).
-    const rows = await db.query<{ name: string; cash: number }>(`
-      select p.name,
-             100000 + sum(case when t.type in ('sell', 'dividend') then t.amount_cents
-                               else -t.amount_cents end)
-                      over (partition by t.player_id order by t.date, t.id) as cash
-      from transactions t join players p on p.id = t.player_id
-    `);
-    expect(Math.min(...rows.map((r) => Number(r.cash)))).toBeGreaterThanOrEqual(-5000);
+    const rows = await db.query<{
+      id: number;
+      player_id: number;
+      date: string;
+      type: LedgerTransaction["type"];
+      instrument_id: number | null;
+      shares: string | null;
+      amount_cents: number;
+    }>("select * from transactions order by id");
+    const byPlayer = new Map<number, LedgerTransaction[]>();
+    for (const r of rows) {
+      const list = byPlayer.get(r.player_id) ?? [];
+      list.push({
+        id: String(r.id),
+        date: r.date,
+        type: r.type,
+        instrumentId: r.instrument_id === null ? null : String(r.instrument_id),
+        shares: r.shares,
+        amountCents: r.amount_cents,
+      });
+      byPlayer.set(r.player_id, list);
+    }
+    expect(byPlayer.size).toBe(3);
+    for (const ledger of byPlayer.values()) {
+      // Adding the last row re-checks the whole ledger, day by day.
+      const last = ledger[ledger.length - 1];
+      const rest = ledger.slice(0, -1);
+      expect(validate(rest, { kind: "create", transaction: last })).toEqual([]);
+    }
   });
 
   it("refuses to run twice", async () => {

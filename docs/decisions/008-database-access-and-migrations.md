@@ -42,7 +42,9 @@ ledger tickets.)
   "no selling more than you hold" are checked by ticket 007's ledger code,
   not by database constraints. The database only enforces shape: types,
   positive amounts, which fields each transaction type needs, and
-  uniqueness.
+  uniqueness. It does mirror the ledger's share precision:
+  `shares = round(shares, 8)` rejects a 9th significant decimal instead of
+  rounding it, as `numeric(20,8)` would.
 
 ## Consequences
 

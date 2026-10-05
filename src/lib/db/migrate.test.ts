@@ -98,10 +98,11 @@ describe("schema", () => {
     expect(row).toEqual({ date: "2026-11-02", shares: "0.00012345", amount_cents: 1234 });
   });
 
-  it("rejects more than 8 decimal places of shares", async () => {
+  it("rejects more than 8 decimal places of shares, but allows trailing zeros", async () => {
     await expect(
       insertTransaction({ type: "buy", instrumentId, shares: "0.000000001", amountCents: 100 }),
     ).rejects.toThrow();
+    await insertTransaction({ type: "buy", instrumentId, shares: "1.500000000", amountCents: 100 });
   });
 
   it("rejects fractional cents", async () => {

@@ -27,9 +27,9 @@ create table transactions (
   date date not null,
   type text not null check (type in ('buy', 'sell', 'fee', 'dividend')),
   instrument_id integer references instruments (id),
-  -- Exact decimal, at most 8 decimal places (matches src/lib ledger code).
-  -- Rejected rather than rounded if there are more.
-  shares numeric check (shares > 0 and scale(shares) <= 8),
+  -- Exact decimal, at most 8 significant decimal places (SHARE_DECIMALS in
+  -- src/lib/ledger.ts). More is rejected rather than rounded; trailing zeros are fine.
+  shares numeric check (shares > 0 and shares = round(shares, 8)),
   -- What the broker charged or paid, in euro cents. Direction comes from type.
   amount_cents integer not null check (amount_cents > 0),
   note text,

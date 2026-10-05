@@ -82,7 +82,8 @@ from it, never stored as the source of truth. Postgres tables, created by
   labels such as the player's name, used as the audit trail).
   - `amount_cents`: integer > 0, what the broker charged or paid in EUR. The
     sign comes from `type`.
-  - `shares`: decimal > 0 with at most 8 decimal places. Required for
+  - `shares`: decimal > 0 with at most 8 significant decimal places
+    (trailing zeros are fine). Required for
     buy/sell, and must be empty for fee/dividend.
   - `instrument_id`: required for buy/sell/dividend, optional for fee (e.g. a
     fee belonging to a trade).
@@ -90,6 +91,10 @@ from it, never stored as the source of truth. Postgres tables, created by
   - `sell`: cash += amount, shares −= n (can't sell more than held)
   - `fee`: cash −= amount
   - `dividend`: cash += amount
+  - The cash and selling rules are checked at the **end of each day**, over
+    the whole ledger, on every create, edit or delete (ADR 007). Logic:
+    `src/lib/ledger.ts` (`replay`, `validate`). Ledger ids are strings, so
+    map DB integer ids with `String()`.
 - **`price_snapshots`:** `instrument_id`, `date`, `close` (decimal, in the
   instrument's currency), `currency`, `fetched_at`. One row per instrument
   and day.
@@ -146,8 +151,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 
 - `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
   `route.ts` files). Keep these thin; put logic in `src/lib/`.
-- `src/lib/`: framework-free TypeScript (money formatting now; ledger,
-  valuation and market-data clients later), unit-tested with Vitest.
+- `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
+  money formatting (`money.ts`) and ledger replay/validation (`ledger.ts`).
+  Later: valuation and market-data clients.
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner and the dev seed.
@@ -184,17 +190,18 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
 - `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
   connection string (host contains `-pooler`) with `sslmode=require`, as
   copied from Neon (`connect()` drops `channel_binding`, which postgres.js
-  can't handle). For
-  local development, use a separate Neon branch (free) or any local
-  Postgres, never the production database. The app reads it lazily via
+  can't handle). For local development, use a separate Neon branch (free)
+  or any local Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
 
 ## Conventions
 
-- Money as integer euro cents; share counts as decimals (fractional shares
-  and crypto quantities are allowed).
+- Money as integer euro cents. Share counts are exact decimals with at most
+  **8 decimal places**, passed as decimal strings like `"0.5"` (Postgres
+  `numeric`). Never do share arithmetic in floats where the ledger
+  rules depend on it (ADR 007).
 - "Game days" are dates in `Europe/Berlin`. A day's snapshot is taken after
   the US close of that day. Store timestamps in UTC.
 - `Instrument.symbol` is the **Yahoo Finance symbol**: `AAPL` (US), `SAP.DE`
