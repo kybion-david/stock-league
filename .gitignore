@@ -39,3 +39,6 @@ npm-debug.log*
 
 # Claude Code built-in worktrees (we use sibling ../stock-league-<slug> dirs instead)
 .claude/worktrees/
+
+# Terraform plan files
+tfplan

@@ -131,7 +131,9 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   lint, typecheck, test and build on every PR (`.github/workflows/ci.yml`).
 - **Hosting:** Azure Static Web Apps, **Free** plan, with hybrid Next.js
   rendering (server components and API routes on SWA's managed backend).
-  Deployed from GitHub Actions. Fallback if needed: Vercel Hobby.
+  Built as `output: "standalone"` to stay under SWA's 250 MB limit.
+  Provisioned with Terraform (`infra/`) and deployed from GitHub Actions on
+  every merge to `main` (ADR 009). Fallback if needed: Vercel Hobby.
 - **Database:** Neon Free (serverless Postgres), EU region. Connected with
   `DATABASE_URL` from the app and from the daily job.
 - **Database access (ADR 008):** `postgres` (postgres.js) driver, no ORM,
@@ -171,9 +173,12 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
   one that has been merged; add a new file instead.
 - `scripts/`: standalone Node scripts. `db.mts` is the database CLI.
-- `.github/workflows/`: `ci.yml` (checks), `docs-check.yml`, and
-  `market-data-live.yml` (live market-data test on a runner; runs on demand
+  `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
+- `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
+  Azure SWA), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
   and on PRs that touch `src/lib/market-data*.ts`).
+- `infra/`: Terraform for the Azure resource group and Static Web App
+  (ADR 009). State is kept outside the repo.
 
 ## Commands
 
@@ -184,7 +189,8 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - `npm run lint`: ESLint.
 - `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
 - `npm test`: Vitest, run once (`npm run test:watch` to watch).
-- `npm run build` / `npm start`: production build and serve.
+- `npm run build` / `npm start`: production build (standalone, ADR 009)
+  and serve it at http://localhost:3000.
 - `npm run db:migrate`: apply pending migrations to `DATABASE_URL` (from
   the environment or `.env`). Safe to re-run.
 - `npm run db:seed`: insert fake dev players, trades and snapshots. Refuses
@@ -193,7 +199,26 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
   tests never touch the network.
 
-Deploy commands come with ticket 006.
+### Deploy (ADR 009)
+
+- **Normal deploys are automatic:** every push to `main` (every merged PR)
+  runs `.github/workflows/deploy.yml`. Re-run it by hand with
+  `gh workflow run deploy`.
+- **Infra changes** (rare, by the owner, logged in with `az login`):
+
+  ```sh
+  cd infra
+  export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+  terraform init -backend-config="path=$HOME/.stock-league/terraform.tfstate"
+  terraform plan    # then: terraform apply
+  ```
+
+- **Set or change a runtime secret:**
+  `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league --setting-names NAME=value`.
+- **Deploy token:** after a rotation (`az staticwebapp secrets reset-api-key
+  -n swa-stock-league -g rg-stock-league`), store
+  `terraform output -raw api_key` as the `AZURE_STATIC_WEB_APPS_API_TOKEN`
+  GitHub secret.
 
 ## Configuration
 
@@ -201,7 +226,7 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
 
 - `SITE_PASSWORD` (required): the shared password (ADR 002, 006). If it's
   unset, nobody can log in. Changing it logs every device out. Set it in
-  `.env` locally, and as an app setting on SWA (ticket 006).
+  `.env` locally, and as an app setting on SWA.
 - `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
   connection string (host contains `-pooler`) with `sslmode=require`, as
   copied from Neon (`connect()` drops `channel_binding`, which postgres.js
@@ -210,6 +235,15 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   `getDb()`, so builds and tests don't need it.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
+
+Where production values live (ADR 009); never in git:
+
+- **SWA app settings** (runtime env for the live app): `SITE_PASSWORD` and
+  `DATABASE_URL`.
+- **GitHub Actions secrets:** `AZURE_STATIC_WEB_APPS_API_TOKEN` (SWA
+  deployment token, used by `deploy.yml`) and `DATABASE_URL` (for the daily
+  job, ticket 013).
+- **Owner's machine:** Terraform state at `~/.stock-league/terraform.tfstate`.
 
 ## Conventions
 

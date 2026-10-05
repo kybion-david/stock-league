@@ -34,4 +34,5 @@ What gets easier, what gets harder, what we gave up.
 | 006 | [Password gate: Next.js proxy + password-signed cookie](006-password-gate.md) | Accepted |
 | 007 | [Ledger validation: end-of-day checks, exact shares](007-ledger-validation-rules.md) | Accepted |
 | 008 | [Database access: postgres.js, SQL migrations, PGlite tests](008-database-access-and-migrations.md) | Accepted |
+| 009 | [Deploy pipeline: Terraform once, token deploy on merge](009-deploy-pipeline.md) | Accepted |
 | 010 | [Market-data client: major-unit prices, same-day candles, live check on PRs](010-market-data-client.md) | Accepted |

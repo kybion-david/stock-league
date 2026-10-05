@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 005 done: shared-password gate, ADR 006; Neon provisioned; ticket 010 done).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 006: deploy pipeline merged, ADR 009; ticket 005 done: password gate, ADR 006; Neon provisioned; ticket 010 done).
 
 ## Current state
 
@@ -10,7 +10,13 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 005
 - **App scaffolded (ticket 003, ADR 005):** Next.js 16 + TypeScript +
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
-  typecheck, test and build on every PR. Nothing is deployed yet.
+  typecheck, test and build on every PR.
+- **Deploy pipeline (ticket 006, ADR 009):** `swa-stock-league` (SWA Free,
+  `rg-stock-league`, Kybion Production subscription) is provisioned with
+  Terraform (`infra/`; state in `~/.stock-league/` on the owner's machine).
+  `.github/workflows/deploy.yml` deploys every push to `main`. The build is
+  `output: "standalone"` (~50 MB, under SWA's 250 MB limit).
+  **Live URL:** https://orange-grass-0fb3e1803.4.azurestaticapps.net
 - **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
   page to `/login` and returns 401 for `/api/*` until the shared password is
   entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
@@ -37,7 +43,7 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 005
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
-  GitHub Actions. Nothing is provisioned yet.
+  GitHub Actions. Both are provisioned (see below).
 - **Market-data client done (ticket 010, ADRs 003 and 010):**
   `src/lib/market-data.ts` wraps Yahoo (closes, symbol lookup and search) and
   Frankfurter/ECB (FX to EUR), with retries and typed errors. Unit-tested
@@ -56,9 +62,10 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
 lowest number whose dependencies are done. 001–005, 007 and 010 are done.
-006 (deploy) is next, because of the SWA preview risk below. It must check
-that `/.swa/` stays reachable through the proxy. 008 (players and
-instruments) and 011 (snapshot ingestion) are unblocked too.
+006 (deploy) is merged. Its ticket moves to `done/` once the live checks pass
+(health check `/.swa/` reachable, redirect to `/login`, 401 on `/api/*`,
+login works). Next: 008 (players and instruments) and 011 (snapshot
+ingestion), both unblocked.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
