@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 006 done: live on Azure SWA; fixed an edge-cache bypass of the password gate; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -25,7 +25,9 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 006
 - **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
   page to `/login` and returns 401 for `/api/*` until the shared password is
   entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
-  locally) or nobody can log in.
+  locally) or nobody can log in. The first login after idle time takes a
+  few seconds (SWA cold start), so the button shows a spinner, and after 3 s
+  a "waking up the server" hint (`SubmitButton`).
 - **Database schema done (ticket 004, ADR 008):** five tables in
   `db/migrations/001_initial_schema.sql`, a migration runner
   (`npm run db:migrate`) and a dev seed (`npm run db:seed`). No page reads

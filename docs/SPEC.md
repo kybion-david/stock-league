@@ -164,6 +164,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/proxy.ts`: the password gate (ADR 006). Next.js 16 calls
   middleware "proxy". Its matcher must keep excluding `/.swa/`.
 - `src/app/login/`: login page and its server action.
+- `src/app/_components/`: shared client components (`_` keeps the folder
+  out of routing). `SubmitButton` gives any server-action form a pending
+  state.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money formatting (`money.ts`), ledger replay/validation (`ledger.ts`) and
   the market-data client (`market-data.ts`). Later: valuation.
@@ -259,6 +262,9 @@ Where production values live (ADR 009); never in git:
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
   renders `€1,234.56`.
 - Import from `src` with the `@/` alias (`@/lib/money`).
+- Every form that submits to a server action uses `SubmitButton`
+  (`@/app/_components/submit-button`), so a slow request (cold start) shows a
+  spinner instead of looking dead.
 - Every page renders dynamically (root layout `dynamic = "force-dynamic"`).
   Never make a page static or revalidated: SWA's edge would cache it and
   serve it past the password gate (ADR 006).
