@@ -33,7 +33,7 @@ lowest number whose dependencies are done. 001 and 002 are done; 003
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
