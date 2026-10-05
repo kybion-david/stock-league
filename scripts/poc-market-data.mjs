@@ -22,12 +22,14 @@ async function yahooClose(symbol, day) {
   return { symbol, close: r.indicators.quote[0].close[i], currency: r.meta.currency, exchange: r.meta.fullExchangeName };
 }
 
-// Frankfurter (ECB reference rates): EUR -> currency on a date.
+// Frankfurter v2, pinned to ECB reference rates: EUR -> currency on a date.
+// On non-publication days it returns the last published rate (see `date`).
 async function ecbRate(currency, day) {
-  const res = await fetch(`https://api.frankfurter.dev/v1/${day}?from=EUR&to=${currency}`);
+  const url = `https://api.frankfurter.dev/v2/rates?date=${day}&base=EUR&quotes=${currency}&providers=ecb`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Frankfurter ${currency}: HTTP ${res.status}`);
-  const body = await res.json();
-  return { rate: body.rates[currency], rateDate: body.date };
+  const [row] = await res.json();
+  return { rate: row.rate, rateDate: row.date };
 }
 
 const [aapl, sap, usd] = await Promise.all([

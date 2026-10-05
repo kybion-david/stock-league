@@ -20,9 +20,9 @@ Free tiers checked against the providers' own pricing pages on 2026-10-05:
 | Financial Modeling Prep Basic | Yes | No: "US data only", personal use | 250/day | |
 | Tiingo Free | Yes | No: US & Chinese stocks | 50/h, 1,000/day | "Internal use… may not display or share the data with another person", which our app does. |
 | EODHD Free | Yes | No: demo key "AAPL.US only", 20 calls/day | 20/day, 1 yr history | Good paid option if we ever pay. |
-| Alpha Vantage Free | Yes | Partial | **25/day** | Too few calls for ~30 symbols + backfill. |
-| Stooq CSV | No | Yes | n/a | Now behind a JavaScript proof-of-work challenge. Unusable from a script. |
-| **Frankfurter** (ECB reference rates) | No | n/a (FX only) | "No quotas", abuse rate-limit | Official ECB rates, history back to 1999 for ECB. |
+| Alpha Vantage Free | Yes | Not verified | **25/day** | Ruled out on limits alone: too few calls for ~30 symbols + backfill. |
+| Stooq CSV | No | Not verified | n/a | Ruled out: now behind a JavaScript proof-of-work challenge, so a script can't use it. |
+| **Frankfurter** v2 | No | n/a (FX only) | "No quotas", abuse rate-limit | Blends many central banks by default; `providers=ecb` pins ECB reference rates. v1 is deprecated ("remains available indefinitely"). |
 | CoinGecko public | No (demo key optional) | n/a (crypto only) | History limited to past 365 days keyless | Possible crypto fallback. |
 
 ## Decision
@@ -30,17 +30,19 @@ Free tiers checked against the providers' own pricing pages on 2026-10-05:
 - **Prices (stocks, ETFs, crypto):** Yahoo Finance chart endpoint
   `query1.finance.yahoo.com/v8/finance/chart/{symbol}` with daily interval.
   Symbol lookup via `/v1/finance/search`. No API key.
-- **FX to EUR:** Frankfurter (`api.frankfurter.dev/v1/{date}?from=EUR`), which
-  serves the ECB reference rates. No API key. ECB publishes around 16:00 CET
-  on TARGET business days. For weekends and holidays, Frankfurter returns the
-  last published day (check the `date` field in the response).
+- **FX to EUR:** Frankfurter v2, pinned to ECB reference rates:
+  `api.frankfurter.dev/v2/rates?date={date}&base=EUR&quotes={ccy}&providers=ecb`.
+  No API key. ECB covers ~30 major currencies (USD, GBP, CHF, SEK, …), which
+  is enough for us. On weekends and holidays it returns the last published
+  rate (tested: 2026-10-03, a Saturday, returns 2026-10-02). Check `date`
+  in the response.
 - **Symbol convention:** `Instrument.symbol` is the Yahoo symbol: `AAPL` (US),
   `SAP.DE` (Xetra), `IWDA.AS` (Euronext Amsterdam), `BTC-EUR` (crypto quoted
   in EUR, so no FX step is needed). The instrument's currency comes from
   Yahoo's `meta.currency`.
 - **Timing vs the 22:30 UTC job:** Xetra/Euronext close at 17:30 CET, the US
-  closes at 16:00 ET (20:00–21:00 UTC), and the ECB rate is out by about
-  15:00 UTC, so all of that day's data is final by 22:30 UTC. Crypto uses
+  closes at 16:00 ET (20:00–21:00 UTC), and the ECB rate comes out in the
+  afternoon CET, so all of that day's data is final by 22:30 UTC. Crypto uses
   `meta.regularMarketPrice` at fetch time (SPEC). Backfill uses the daily candle.
 - Proof of concept: `scripts/poc-market-data.mjs`.
 
@@ -51,7 +53,7 @@ Free tiers checked against the providers' own pricing pages on 2026-10-05:
 - **Risk: Yahoo's endpoint is unofficial and undocumented.** Its terms don't
   grant personal use, it can change or rate-limit without notice, and it may
   block datacenter IPs (e.g. GitHub Actions runners). That hasn't been tested
-  yet. Mitigations: ticket 010 hides the provider behind a small interface, and
+  yet. Ticket 010 must test it from a runner. Mitigations: ticket 010 hides the provider behind a small interface, and
   ticket 011 reports per-symbol failures and supports backfill, so a missed
   day can be re-fetched. The fallback is Twelve Data (free, key) for US
   stocks, FX and crypto, plus a paid EODHD plan or manual price entry for EU

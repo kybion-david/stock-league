@@ -21,4 +21,5 @@ everyone can see how they're doing compared to each other.
 
 ## Running locally
 
-Nothing to run yet — see [`docs/STATUS.md`](docs/STATUS.md).
+No app yet — see [`docs/STATUS.md`](docs/STATUS.md). The market-data proof of
+concept runs with `node scripts/poc-market-data.mjs [YYYY-MM-DD]` (Node 18+).

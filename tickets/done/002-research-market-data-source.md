@@ -20,7 +20,9 @@ tiers change often.
 
 ## Acceptance criteria
 
-- [ ] ADR written comparing at least 3 options, with the choice and its reasons
-- [ ] Small proof-of-concept script fetches one US stock, one EU stock and EUR/USD for a past date
-- [ ] Env var names added to `.env.example` and `docs/SPEC.md` → Configuration
-- [ ] `docs/SPEC.md` Tech stack updated
+- [x] ADR written comparing at least 3 options, with the choice and its reasons
+- [x] Small proof-of-concept script fetches one US stock, one EU stock and EUR/USD for a past date
+- [x] Env var names added to `.env.example` and `docs/SPEC.md` → Configuration
+  (both sources are keyless, so the `MARKET_DATA_API_KEY` placeholder was removed
+  and SPEC → Configuration says so)
+- [x] `docs/SPEC.md` Tech stack updated

@@ -56,4 +56,4 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   needed before launch (ticket 019).
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
   block GitHub Actions IPs. That hasn't been tested from a runner yet: check
-  it in ticket 013, and use the fallbacks listed in ADR 003 if it fails.
+  it in ticket 010, and use the fallbacks listed in ADR 003 if it fails.
