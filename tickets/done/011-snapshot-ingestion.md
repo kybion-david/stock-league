@@ -13,8 +13,8 @@ date range.
 
 ## Acceptance criteria
 
-- [ ] Ingest command for one date and for a range
-- [ ] Re-running a date updates rather than duplicates
-- [ ] Weekend/holiday handling via carry-forward; partial failures reported, not fatal
-- [ ] Tests with the mocked client
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Ingest command for one date and for a range
+- [x] Re-running a date updates rather than duplicates
+- [x] Weekend/holiday handling via carry-forward; partial failures reported, not fatal
+- [x] Tests with the mocked client
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
