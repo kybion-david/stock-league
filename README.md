@@ -24,11 +24,16 @@ everyone can see how they're doing compared to each other.
 Needs Node 22 (`nvm use`).
 
 ```sh
-cp .env.example .env   # then set SITE_PASSWORD
 npm install
-npm run dev     # http://localhost:3000
+cp .env.example .env   # set SITE_PASSWORD, and DATABASE_URL to a dev database (e.g. a Neon branch)
+npm run db:migrate
+npm run db:seed        # optional fake players and trades
+npm run dev            # http://localhost:3000
 ```
+
+Tests don't need a database: they use an in-memory Postgres (PGlite). They
+don't call market-data APIs either; `npm run test:live` does.
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
 is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
-page behind the password gate so far; see [`docs/STATUS.md`](docs/STATUS.md).
+page behind the password gate so far (the database schema exists, but no page uses it yet); see [`docs/STATUS.md`](docs/STATUS.md).
