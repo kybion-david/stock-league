@@ -32,6 +32,19 @@ describe("players", () => {
     await expect(createPlayer(db, { name: "Adam ", emoji: "" })).rejects.toThrow(
       "There's already a player called Adam.",
     );
+    await expect(createPlayer(db, { name: "aDAM", emoji: "" })).rejects.toThrow(
+      "There's already a player called Adam.",
+    );
+  });
+
+  it("ignores case when renaming: to another player's name no, own name yes", async () => {
+    await createPlayer(db, { name: "Adam", emoji: "" });
+    const { id } = await createPlayer(db, { name: "Bea", emoji: "" });
+    await expect(updatePlayer(db, id, { name: "adam", emoji: "" })).rejects.toThrow(
+      "There's already a player called Adam.",
+    );
+    await updatePlayer(db, id, { name: "BEA", emoji: "" });
+    expect(await getPlayer(db, id)).toEqual({ id, name: "BEA", emoji: null });
   });
 
   it("renames a player and changes the emoji", async () => {

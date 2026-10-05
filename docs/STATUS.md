@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -162,6 +162,22 @@ session; update at the end of every change. Last updated: 2026-10-05 (open PRs 2
   "Movers on <day>" instead of "Today" (the day is often yesterday); the
   trade page links to the player's page; the player page's "Invested"
   card is now "In holdings" (it's the market value, not what was paid).
+- **User-flow test of the integrated site (2026-10-05, branch `testing`):**
+  every flow was driven with Playwright at 375 px against the production
+  build and local Postgres, with the server clock moved to 2026-11-20, to
+  kick-off day and to the day after: login (wrong password, deep link),
+  players and instruments (add, duplicate, edit, Yahoo unreachable), trades
+  (buy, sell, fee, dividend, overspend, oversell, future date, bad amounts
+  and shares, edit with audit line, cancelled and confirmed delete, refused
+  delete), the leaderboard, player pages (sell-out, buy without a price,
+  ties), the chart (keys, tap, hover) and stats. Fixed: with prices stored
+  before kick-off (an early buy), the home page said "0 days to go" all of
+  2026-11-01 and "−1 days to go" if that night's run was skipped; it now
+  shows the game as started (ADR 016). Dark mode now sets `color-scheme`, so
+  the date picker icon is visible and select menus are dark. Player names
+  are now unique regardless of case. The player page names the price day
+  like the home page. Yahoo was unreachable from the test machine, so only
+  the "couldn't reach Yahoo" path of adding an instrument was tried.
 - **Daily backup done (ticket 019, ADR 017):** `.github/workflows/daily-backup.yml`
   dumps production at 03:17 UTC, restores the dump into a throwaway
   Postgres 18 in the same run to prove it works, and keeps it as an

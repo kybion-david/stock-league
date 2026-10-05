@@ -66,7 +66,8 @@ Confirmed with the project owner (2026-10-05):
 4. **Dashboard:**
    - **Leaderboard (home page `/`, ADR 016, `src/lib/leaderboard.ts`):**
      players ranked by value on the latest day with prices (before the
-     first daily run: today), with total return and day change in € and %,
+     first daily run, or from 2026-11-01 while the latest prices are still
+     from before it: today), with total return and day change in € and %,
      green ▲ for up and red ▼ for down. Equal values share a place. 🥇🥈🥉
      for places 1–3 and 🥄 for last place from 4th down, but no awards before
      the game starts or while everyone is level. The header says which day
@@ -104,7 +105,8 @@ Confirmed with the project owner (2026-10-05):
    is added by its Yahoo symbol alone: it's checked with Yahoo, which also
    supplies name, type, currency and exchange. Name, type, currency and
    exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
-   names and symbols are rejected. Nothing can be deleted.
+   names and symbols are rejected, whatever their case ("dave" next to
+   "Dave"). Nothing can be deleted.
 
 Nice-to-have (not MVP): prizes/penalties display, fun badges/titles,
 notifications to a group chat, "what if everyone bought the S&P 500"

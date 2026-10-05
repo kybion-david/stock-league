@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  /* Native controls (date picker icon, select menus) follow the theme. */
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
   /* Chart line colours, one per player (ADR 018). Fixed order, checked for
@@ -24,6 +26,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --background: #0a0a0a;
     --foreground: #ededed;
     --series-1: #3987e5;

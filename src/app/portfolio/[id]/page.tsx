@@ -34,7 +34,7 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
       <section className="flex flex-col gap-2 rounded-2xl border border-foreground/15 p-4">
         <p className="text-sm text-foreground/60">
           {started
-            ? `${placeLabel(p)} · prices from ${formatDay(p.date)}`
+            ? `${placeLabel(p)} · prices from ${formatDay(p.lastUpdated ?? p.date)}`
             : `Kick-off ${formatDay(GAME_START_DATE)}`}
         </p>
         <p className="text-4xl font-bold tabular-nums">{formatEuroCents(row.valueCents)}</p>
