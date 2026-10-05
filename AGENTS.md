@@ -31,29 +31,47 @@ need. If something looks under-engineered, that may be intentional — check
 | `docs/decisions/` | **Why**: numbered ADRs (`NNN-slug.md`). See `docs/decisions/README.md`. |
 | `tickets/` | Work items. `backlog/` = open, `done/` = finished. Format: `tickets/TEMPLATE.md`. |
 | `.github/` | PR template and CI (incl. the docs-check workflow). |
-| `.claude/` | Claude Code hook that enforces reading the spec before editing. |
+| `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
 
 No application code exists yet. When it does, add its folders to this map
 **and** to the Structure section of `docs/SPEC.md`.
 
 ## Session workflow
 
-### 1. Start: load context (mandatory)
+### 1. Start: create a worktree, then load context (mandatory)
 
-Before changing anything, read:
+**Every piece of work (ticket, feature, fix, PR) gets its own git worktree.**
+Several agents work on this repo in parallel, so nobody switches branches or
+edits files in the main checkout. The main checkout stays on `main`, clean,
+and is only used to create and remove worktrees.
+
+From the main checkout:
+
+```sh
+git fetch origin
+git worktree add ../stock-league-<slug> -b <type>/<slug> origin/main
+```
+
+`<type>/<slug>` is the branch name (see *Work* below). Do everything for that
+task inside `../stock-league-<slug>`. To continue an existing branch (for
+example, review fixes on an open PR), drop the `-b`:
+`git worktree add ../stock-league-<slug> <type>/<slug>`.
+
+Then, inside the worktree, read:
 
 1. `docs/SPEC.md`
 2. `docs/STATUS.md`
 3. The ticket you're working on, and any ADR it references.
 
-A Claude Code hook blocks Edit/Write until `docs/SPEC.md` has been read. Other
-agents: the rule applies to you too, there's just no hook to stop you.
+Claude Code hooks block Edit/Write until `docs/SPEC.md` has been read, and
+block Edit/Write on files in the main checkout. Other agents: the rules apply
+to you too, there's just no hook to stop you.
 
 ### 2. Work
 
 - Never commit directly to `main`. Branch as `feat/<slug>`, `fix/<slug>`,
-  `docs/<slug>` or `chore/<slug>`. If you're already on a suitable branch,
-  keep using it.
+  `docs/<slug>` or `chore/<slug>`, always in a fresh worktree (above). If
+  you're already in a worktree on a suitable branch, keep using it.
 - Pick tickets from `tickets/backlog/` lowest number first, unless told
   otherwise. Work on one ticket at a time.
 - If the user tells you something that contradicts the docs, the user wins —
@@ -71,6 +89,19 @@ agents: the rule applies to you too, there's just no hook to stop you.
 - [ ] Every doc affected by the change is updated (table below) **in the same PR**.
 - [ ] Ticket moved from `tickets/backlog/` to `tickets/done/` if its acceptance criteria are met.
 - [ ] PR opened to `main` with the template's docs checklist filled in.
+- [ ] Worktree removed (see below).
+
+**Remove the worktree** once everything is committed, pushed and the PR is
+open. Run it from the main checkout, not from inside the worktree:
+
+```sh
+git worktree remove ../stock-league-<slug>
+```
+
+Never add `--force`: if git refuses because of uncommitted changes, commit or
+deal with them first. The branch stays on GitHub; re-create the worktree from
+it if the PR needs more work. After the PR is merged, `git branch -d
+<type>/<slug>` and `git worktree prune` clean up the rest.
 
 | If you changed… | …then update |
 |---|---|

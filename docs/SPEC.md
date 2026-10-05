@@ -95,7 +95,9 @@ from the owner: **free hosting only** (or near-zero cost), and the app needs
 
 ## Structure
 
-Nothing beyond docs yet. See the repo map in `AGENTS.md`.
+Nothing beyond docs and agent tooling yet. See the repo map in `AGENTS.md`.
+Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
+the main checkout; see `AGENTS.md` → Session workflow.
 
 ## Commands
 
