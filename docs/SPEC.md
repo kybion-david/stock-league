@@ -182,7 +182,9 @@ Deploy commands come with ticket 006.
 Env vars are listed in `.env.example`. Document each one here once it's in use.
 
 - `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
-  connection string (host contains `-pooler`) with `sslmode=require`. For
+  connection string (host contains `-pooler`) with `sslmode=require`, as
+  copied from Neon (`connect()` drops `channel_binding`, which postgres.js
+  can't handle). For
   local development, use a separate Neon branch (free) or any local
   Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.

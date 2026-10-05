@@ -26,7 +26,7 @@ function wrap(sql: Sql): Db {
 
 /** Opens a connection pool. Call `close()` when a script is done. */
 export function connect(url: string): Db & { close(): Promise<void> } {
-  const sql = postgres(url, {
+  const sql = postgres(withoutUnsupportedParams(url), {
     // Neon's pooled endpoint runs PgBouncer in transaction mode, which
     // doesn't support named prepared statements.
     prepare: false,
@@ -42,6 +42,18 @@ export function connect(url: string): Db & { close(): Promise<void> } {
     onnotice: () => {},
   });
   return { ...wrap(sql), close: () => sql.end() };
+}
+
+/**
+ * postgres.js sends URL params it doesn't know to the server as settings.
+ * Neon's copy-paste URL includes `channel_binding=require`, which the server
+ * would reject as an unknown setting, so drop it.
+ */
+export function withoutUnsupportedParams(url: string): string {
+  const parsed = new URL(url);
+  if (!parsed.searchParams.has("channel_binding")) return url;
+  parsed.searchParams.delete("channel_binding");
+  return parsed.toString();
 }
 
 let shared: Db | undefined;
