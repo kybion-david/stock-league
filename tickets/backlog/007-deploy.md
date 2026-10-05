@@ -5,12 +5,13 @@
 
 ## Description
 
-Get the app hosted and auto-deployed on merge to `main`, with whatever access
-control the owner chose (open question 9 in STATUS).
+Get the app hosted and auto-deployed on merge to `main`, on a **free** tier,
+behind the shared password (ADR 002).
 
 ## Acceptance criteria
 
 - [ ] Hosting provisioned (IaC if following the owner's usual Terraform setup)
 - [ ] Deploys automatically on push to `main`
-- [ ] Access control as agreed with the owner
+- [ ] Site unusable without the shared password; password stored as a secret, not in git
+- [ ] Confirmed zero (or near-zero) running cost
 - [ ] URL and deploy steps documented in `docs/SPEC.md` → Commands; current URL in `docs/STATUS.md`

@@ -20,7 +20,8 @@ tooling and deploy knowledge consistent.
 - **Daily job:** GitHub Actions scheduled workflow (`cron`) that fetches prices
   and FX and writes snapshots.
 - **Hosting:** Azure Static Web Apps (Free tier), deployed from GitHub Actions,
-  matching the owner's other projects.
+  matching the owner's other projects. Must support server-side code (ADR 002)
+  and be **free**. Any free alternative that fits better is fine.
 - **Persistence: unresolved, and this is the real open piece.** A purely
   static export can't hold editable holdings or growing price history. Options
   to weigh in ticket 001:
@@ -30,13 +31,12 @@ tooling and deploy knowledge consistent.
   2. **Managed DB with a free tier** (e.g. a hosted Postgres/SQLite service)
      plus API routes or SWA managed functions. More flexible, more moving parts.
 
-  Leaning: option 1 for the MVP. The data is tiny, holdings rarely change, and
-  it keeps everything in git.
+  ~~Leaning: option 1 for the MVP.~~ **Update 2026-10-05: option 1 is ruled
+  out by ADR 002.** Players trade at any time and enter trades in the app, so
+  option 2 (free-tier hosted DB) is required.
 
 ## Consequences
 
-- Option 1 means players send their holdings to the admin (or open a PR)
-  rather than typing them into the app.
 - GitHub Actions cron is "best effort" timing (can run minutes late). That's
   fine for daily closes.
-- Revisit if the owner wants logins or in-app editing.
+- See ADR 002 for auth (shared password) and data model (ledger).
