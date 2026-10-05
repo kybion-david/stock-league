@@ -41,3 +41,4 @@ What gets easier, what gets harder, what we gave up.
 | 013 | [Transaction entry: pick-a-name audit label, hard delete, no future dates](013-transaction-entry.md) | Accepted |
 | 014 | [Valuation: exact cents, last known price, average cost](014-valuation.md) | Accepted |
 | 015 | [Daily job: GitHub Actions cron, date counted back 6 hours, one retry](015-daily-ingest-job.md) | Accepted |
+| 017 | [Daily backup: pg_dump to a workflow artifact, restore-checked every run](017-daily-db-backup.md) | Accepted |

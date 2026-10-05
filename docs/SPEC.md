@@ -172,6 +172,10 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   `npm run ingest` against production with the `DATABASE_URL` secret,
   retries once after 10 minutes, and a failed run shows red in Actions and
   emails whoever last edited the schedule.
+- **Backups (ADR 017):** `.github/workflows/daily-backup.yml` dumps
+  production with `pg_dump` (from the `postgres:17` image, over Neon's
+  direct host) at 03:17 UTC, restores the dump into a throwaway Postgres to
+  check it, and keeps it as a workflow artifact for 90 days.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
@@ -224,8 +228,10 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `ingest.mts` is the snapshot ingestion CLI.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
-  Azure SWA), `daily-ingest.yml` (the daily job, ADR 015), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
-  and on PRs that touch `src/lib/market-data*.ts`).
+  Azure SWA), `daily-ingest.yml` (the daily job, ADR 015),
+  `daily-backup.yml` (daily database backup, ADR 017), `docs-check.yml`,
+  and `market-data-live.yml` (live market-data test on a runner; runs on
+  demand and on PRs that touch `src/lib/market-data*.ts`).
 - `infra/`: Terraform for the Azure resource group and Static Web App
   (ADR 009). State is kept outside the repo.
 
@@ -258,6 +264,29 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - `npm run test:live`: live calls to Yahoo and Frankfurter
   (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
   tests never touch the network.
+
+### Backups (ADR 017)
+
+- **Back up now:** `gh workflow run daily-backup`, or *Run workflow* on the
+  Actions tab. Each run's summary lists the row count of every table.
+- **Download a backup:** open a `daily-backup` run in the Actions tab and
+  download the `stock-league-YYYY-MM-DD` artifact, or
+  `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump`.
+- **Restore** needs `pg_restore` 17 or newer. Without a local install, run
+  it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:17 pg_restore …`.
+  Use Neon's **direct** connection string (the host without `-pooler`).
+  1. Try it on a scratch database first: in the Neon console, add an empty
+     database (for example `restore_test`) to the `dev` branch, then
+     `pg_restore --no-owner --no-acl --single-transaction --dbname="<its
+     connection string>" stock-league-YYYY-MM-DD.dump`. Check
+     `select count(*) from transactions`.
+  2. Replace production with it:
+     `pg_restore --clean --if-exists --no-owner --no-acl --single-transaction
+     --dbname="<production connection string>" stock-league-YYYY-MM-DD.dump`.
+     This drops and recreates every table in one transaction, so it either
+     fully works or changes nothing. Then re-run `daily-ingest` for any
+     days after the backup.
+  3. Drop the scratch database.
 
 ### Deploy (ADR 009)
 
