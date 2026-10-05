@@ -43,11 +43,53 @@ export async function ingestDate(
   client: MarketDataClient,
   date: string,
 ): Promise<IngestReport> {
+  return ingestDay(db, client, date, false);
+}
+
+/** How many days before the run's date `fillGaps` looks back. */
+export const GAP_FILL_DAYS = 7;
+
+/**
+ * Fills in the price and FX rows missing on the `days` days before `date`,
+ * oldest first, without touching rows already stored. A buy entered after
+ * its day's run (players often enter trades the next morning, or backdate
+ * them) otherwise never gets prices for the days before the next run, so it
+ * counts at cost there and its first price lands as one big day change.
+ * Returns a report only for days where something was missing.
+ */
+export async function fillGaps(
+  db: Db,
+  client: MarketDataClient,
+  date: string,
+  days = GAP_FILL_DAYS,
+): Promise<IngestReport[]> {
+  assertDate(date);
+  const reports: IngestReport[] = [];
+  for (let day = addDays(date, -days); day < date; day = addDays(day, 1)) {
+    const report = await ingestDay(db, client, day, true);
+    if (report.prices.length > 0 || report.fx.length > 0) reports.push(report);
+  }
+  return reports;
+}
+
+/** `ingestDate`, or with `onlyMissing` just the rows the day doesn't have yet. */
+async function ingestDay(
+  db: Db,
+  client: MarketDataClient,
+  date: string,
+  onlyMissing: boolean,
+): Promise<IngestReport> {
   assertDate(date);
   const prices: PriceResult[] = [];
   const currencies = new Set<string>();
+  const stored = onlyMissing ? await storedRows(db, date) : null;
 
   for (const instrument of await heldInstruments(db, date)) {
+    const storedCurrency = stored?.prices.get(instrument.id);
+    if (storedCurrency !== undefined) {
+      if (storedCurrency !== "EUR") currencies.add(storedCurrency);
+      continue;
+    }
     const result = await ingestPrice(db, client, instrument, date);
     prices.push(result);
     if (result.status !== "failed" && result.currency !== "EUR") currencies.add(result.currency);
@@ -55,6 +97,7 @@ export async function ingestDate(
 
   const fx: FxResult[] = [];
   for (const currency of [...currencies].sort()) {
+    if (stored?.fx.has(currency)) continue;
     try {
       const rate = await client.getFxToEur(currency, date);
       // Stored under the day, not the ECB's publication date, so valuation
@@ -90,6 +133,25 @@ export async function ingestRange(
     reports.push(await ingestDate(db, client, day));
   }
   return reports;
+}
+
+/** The price rows (instrument id → currency) and FX currencies stored for a day. */
+async function storedRows(
+  db: Db,
+  date: string,
+): Promise<{ prices: Map<number, string>; fx: Set<string> }> {
+  const prices = await db.query<{ instrument_id: number; currency: string }>(
+    "select instrument_id, currency from price_snapshots where date = $1",
+    [date],
+  );
+  const fx = await db.query<{ currency: string }>(
+    "select currency from fx_snapshots where date = $1",
+    [date],
+  );
+  return {
+    prices: new Map(prices.map((p) => [p.instrument_id, p.currency])),
+    fx: new Set(fx.map((r) => r.currency)),
+  };
 }
 
 interface Instrument {

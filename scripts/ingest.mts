@@ -2,11 +2,13 @@
 //   npm run ingest                         → today's UTC date
 //   npm run ingest -- 2026-11-06           → one date
 //   npm run ingest -- 2026-11-01 2026-11-30 → a range, inclusive (backfill)
-// Reads DATABASE_URL from the environment or from .env. Every date and symbol
-// is attempted; the exit code is 1 if anything failed.
+// First fills rows still missing on the 7 days before the first date (a buy
+// entered after its day's run). Reads DATABASE_URL from the environment or
+// from .env. Every date and symbol is attempted; the exit code is 1 if
+// anything failed.
 import { existsSync } from "node:fs";
 import { connect } from "../src/lib/db/postgres";
-import { hasFailures, ingestRange, type IngestReport } from "../src/lib/ingest";
+import { fillGaps, hasFailures, ingestRange, type IngestReport } from "../src/lib/ingest";
 import { createMarketDataClient } from "../src/lib/market-data";
 
 const args = process.argv.slice(2);
@@ -28,9 +30,12 @@ if (!url) {
 
 const db = connect(url);
 try {
-  const reports = await ingestRange(db, createMarketDataClient(), from, to);
-  reports.forEach(print);
-  if (hasFailures(reports)) {
+  const client = createMarketDataClient();
+  const gaps = await fillGaps(db, client, from);
+  gaps.forEach((report) => print(report, " (filled gap)"));
+  const reports = await ingestRange(db, client, from, to);
+  reports.forEach((report) => print(report));
+  if (hasFailures([...gaps, ...reports])) {
     console.error("Some snapshots failed (see above).");
     process.exitCode = 1;
   }
@@ -41,8 +46,8 @@ try {
   await db.close();
 }
 
-function print(report: IngestReport): void {
-  console.log(`${report.date}: ${report.prices.length} prices, ${report.fx.length} FX rates`);
+function print(report: IngestReport, label = ""): void {
+  console.log(`${report.date}${label}: ${report.prices.length} prices, ${report.fx.length} FX rates`);
   for (const p of report.prices) {
     if (p.status === "fetched") console.log(`  ok      ${p.symbol} ${p.close} ${p.currency}`);
     if (p.status === "carried") {

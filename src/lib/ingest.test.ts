@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/lib/db/db";
 import { migrate } from "@/lib/db/migrate";
 import { createTestDb } from "@/lib/db/pglite";
-import { addDays, hasFailures, ingestDate, ingestRange } from "@/lib/ingest";
+import { addDays, fillGaps, hasFailures, ingestDate, ingestRange } from "@/lib/ingest";
 import {
   MarketDataError,
   NoDataError,
@@ -401,5 +401,75 @@ describe("ingestRange", () => {
       "2026-12-02",
     ]);
     await expect(ingestRange(db, client, "2026-11-09", "2026-11-06")).rejects.toThrow(RangeError);
+  });
+});
+
+describe("fillGaps", () => {
+  it("fills the days a late-entered buy missed, and only those", async () => {
+    const alice = await addPlayer("Alice");
+    const iwda = await addInstrument("IWDA.AS");
+    await trade(alice, "2026-11-02", "buy", iwda, "1");
+    const { client, calls } = fakeClient(
+      {
+        "IWDA.AS": { "2026-11-02": "110", "2026-11-03": "111", "2026-11-04": "112" },
+        AAPL: { "2026-11-02": "229", "2026-11-03": "230", "2026-11-04": "231" },
+      },
+      { AAPL: "USD" },
+      { USD: "1.16" },
+    );
+    await ingestRange(db, client, "2026-11-02", "2026-11-03");
+    // Bought on Monday, entered on Wednesday morning after two runs.
+    await trade(alice, "2026-11-02", "buy", await addInstrument("AAPL", "USD"), "1");
+    calls.length = 0;
+
+    const reports = await fillGaps(db, client, "2026-11-04");
+
+    expect(reports).toEqual([
+      {
+        date: "2026-11-02",
+        prices: [{ symbol: "AAPL", status: "fetched", close: "229", currency: "USD" }],
+        fx: [{ currency: "USD", status: "fetched", unitsPerEur: "1.16", from: "2026-11-02" }],
+      },
+      {
+        date: "2026-11-03",
+        prices: [{ symbol: "AAPL", status: "fetched", close: "230", currency: "USD" }],
+        fx: [{ currency: "USD", status: "fetched", unitsPerEur: "1.16", from: "2026-11-03" }],
+      },
+    ]);
+    // IWDA.AS rows already stored aren't fetched again.
+    expect(calls.some((c) => c.includes("IWDA.AS"))).toBe(false);
+    expect((await prices()).map((p) => `${p.date} ${p.symbol} ${p.close}`)).toEqual([
+      "2026-11-02 AAPL 229",
+      "2026-11-02 IWDA.AS 110",
+      "2026-11-03 AAPL 230",
+      "2026-11-03 IWDA.AS 111",
+    ]);
+  });
+
+  it("fills an FX rate that failed while the price was stored", async () => {
+    const alice = await addPlayer("Alice");
+    await trade(alice, "2026-11-02", "buy", await addInstrument("AAPL", "USD"), "1");
+    const down = fakeClient({ AAPL: { "2026-11-05": "230" } }, { AAPL: "USD" }, {
+      USD: new MarketDataError("Frankfurter is down"),
+    });
+    await ingestDate(db, down.client, "2026-11-05");
+    const { client, calls } = fakeClient({}, {}, { USD: "1.16" });
+
+    const reports = await fillGaps(db, client, "2026-11-06", 1);
+
+    expect(reports).toEqual([
+      {
+        date: "2026-11-05",
+        prices: [],
+        fx: [{ currency: "USD", status: "fetched", unitsPerEur: "1.16", from: "2026-11-05" }],
+      },
+    ]);
+    expect(calls).toEqual(["fx USD 2026-11-05"]);
+  });
+
+  it("reports nothing when no day is missing anything", async () => {
+    const { client, calls } = fakeClient({});
+    expect(await fillGaps(db, client, "2026-11-09")).toEqual([]);
+    expect(calls).toEqual([]);
   });
 });
