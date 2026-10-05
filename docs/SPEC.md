@@ -89,7 +89,13 @@ Confirmed with the project owner (2026-10-05):
      line of the value chart; and their whole transaction history (each row
      opens its edit page). Before 2026-11-01 it shows the kick-off date and
      €1,000 instead of a place.
-   - Daily movers: best and worst day, for fun.
+   - **Fun stats (`/stats`, ADR 019, `src/lib/stats.ts`):** for the
+     leaderboard's day: today's top gainer and biggest loser (players, in €
+     and %), hottest and coldest pick (instruments, % change of the EUR
+     price, with who holds them), best and worst single day so far (from day
+     2), best and worst pick of the game (player and instrument, € gain
+     including sold shares), and the fee champion. A stat that doesn't apply
+     yet shows "n/a". Linked from the home page.
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
 6. **Players and instruments** (`/players`, `/instruments`): anyone can add
@@ -233,6 +239,7 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/chart/`: the value chart page and its client component
   (`value-chart.tsx`), which the player page reuses for one player.
 - `src/app/portfolio/[id]/`: the player page.
+- `src/app/stats/`: the fun stats page.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -240,12 +247,14 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
-  `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath),
+  `latestSnapshotDate`; `loadGame` + `standingsFrom` to value several ways
+  from one load; pure `valuePlayer` / `valueSeries` underneath),
   the leaderboard (`leaderboard.ts`: day to show, places, awards,
   old-price notes, day formatting), chart layout (`chart.ts`: scales,
-  ticks, line paths, end labels, colour slots), and the player page's data
+  ticks, line paths, end labels, colour slots), the player page's data
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
-  series and history).
+  series and history), and fun stats (`stats.ts`: `funStats` plus a pure
+  function per stat).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`

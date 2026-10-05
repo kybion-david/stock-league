@@ -11,7 +11,7 @@ and who has paid the most fees.
 
 ## Acceptance criteria
 
-- [ ] At least 4 stats shown on the home page or a stats page
-- [ ] Correct with only one day of data (hide or show "n/a")
-- [ ] Tests for the stat calculations
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] At least 4 stats shown on the home page or a stats page
+- [x] Correct with only one day of data (hide or show "n/a")
+- [x] Tests for the stat calculations
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

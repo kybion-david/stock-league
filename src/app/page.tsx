@@ -61,9 +61,15 @@ export default async function Home() {
         </Link>
         <Link
           href="/chart"
-          className="col-span-2 rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
         >
-          📈 The race: value over time
+          📈 The race
+        </Link>
+        <Link
+          href="/stats"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          🎲 Fun stats
         </Link>
         <Link
           href="/players"

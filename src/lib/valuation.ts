@@ -361,7 +361,8 @@ export interface PlayerSeries {
   points: SeriesPoint[];
 }
 
-interface Loaded {
+/** Everything valuation needs, loaded once (see `loadGame`). */
+export interface GameData {
   players: Player[];
   ledgers: Map<number, LedgerTransaction[]>;
   book: PriceBook;
@@ -371,7 +372,7 @@ interface Loaded {
  * Loads every player, ledger and snapshot up to `to`. Instruments are keyed
  * by symbol (unique and fixed, ADR 011), so holdings read "AAPL".
  */
-async function load(db: Db, to: string): Promise<Loaded> {
+export async function loadGame(db: Db, to: string): Promise<GameData> {
   const players = await db.query<Player>("select id, name, emoji from players order by name");
   const rows = await db.query<{
     id: number;
@@ -417,7 +418,11 @@ async function load(db: Db, to: string): Promise<Loaded> {
  * before, highest value first (ties by name).
  */
 export async function standings(db: Db, date: string): Promise<PlayerStanding[]> {
-  const { players, ledgers, book } = await load(db, date);
+  return standingsFrom(await loadGame(db, date), date);
+}
+
+/** `standings` on data already loaded up to at least `date`. */
+export function standingsFrom({ players, ledgers, book }: GameData, date: string): PlayerStanding[] {
   return players
     .map((player) => {
       const ledger = ledgers.get(player.id) ?? [];
@@ -430,7 +435,7 @@ export async function standings(db: Db, date: string): Promise<PlayerStanding[]>
 
 /** Every player's daily values from `from` to `to` inclusive, by name. */
 export async function playerSeries(db: Db, from: string, to: string): Promise<PlayerSeries[]> {
-  const { players, ledgers, book } = await load(db, to);
+  const { players, ledgers, book } = await loadGame(db, to);
   return players.map((player) => ({
     player,
     points: valueSeries(ledgers.get(player.id) ?? [], from, to, book),
