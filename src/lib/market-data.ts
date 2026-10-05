@@ -204,7 +204,7 @@ export function createMarketDataClient(options: MarketDataOptions = {}): MarketD
       const type = YAHOO_TYPES[meta.instrumentType ?? ""];
       if (!type) {
         throw new UnsupportedInstrumentError(
-          `"${symbol}" is a ${meta.instrumentType ?? "unknown type"}, not a stock, ETF or crypto`,
+          `"${symbol}" is ${describeType(meta.instrumentType)} on Yahoo, not a stock, ETF or crypto.`,
         );
       }
       return {
@@ -261,6 +261,13 @@ export function normalizePrice(
     close: digits.replace(/0+$/, "").replace(/\.$/, ""),
     currency: major ?? currency.toUpperCase(),
   };
+}
+
+/** Yahoo's instrument type for people: "INDEX" → "an index", "MUTUALFUND" → "a mutualfund". */
+function describeType(type: string | undefined): string {
+  if (!type) return "an unknown type";
+  const word = type.toLowerCase().replace(/_/g, " ");
+  return `${/^[aeiou]/.test(word) ? "an" : "a"} ${word}`;
 }
 
 function localDate(epochSeconds: number, timeZone: string): string {

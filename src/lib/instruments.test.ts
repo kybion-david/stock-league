@@ -73,7 +73,7 @@ describe("addInstrument", () => {
 
   it.each([
     [new UnknownSymbolError("nope"), "doesn't know"],
-    [new UnsupportedInstrumentError('"^GSPC" is a INDEX, not a stock, ETF or crypto'), "INDEX"],
+    [new UnsupportedInstrumentError('"^GSPC" is an index on Yahoo, not a stock'), "an index"],
     [new RateLimitError("429"), "Couldn't reach Yahoo"],
   ])("turns %s into a readable error", async (err, message) => {
     const result = addInstrument(db, market(err), "XYZ");
