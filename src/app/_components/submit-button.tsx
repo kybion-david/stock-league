@@ -14,9 +14,12 @@ const SLOW_AFTER_MS = 3000;
 export function SubmitButton({
   children,
   pendingLabel,
+  danger = false,
 }: {
   children: React.ReactNode;
   pendingLabel: string;
+  /** Outlined in red, for destructive actions such as a delete. */
+  danger?: boolean;
 }) {
   const { pending } = useFormStatus();
   const [slow, setSlow] = useState(false);
@@ -36,12 +39,18 @@ export function SubmitButton({
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="flex items-center justify-center gap-3 rounded-xl bg-foreground px-4 py-3 text-lg font-semibold text-background transition-opacity disabled:opacity-70"
+        className={`flex items-center justify-center gap-3 rounded-xl px-4 py-3 text-lg font-semibold transition-opacity disabled:opacity-70 ${
+          danger
+            ? "border border-red-600/40 text-red-600 hover:bg-red-600/10 dark:text-red-400"
+            : "bg-foreground text-background"
+        }`}
       >
         {pending && (
           <span
             aria-hidden
-            className="size-5 animate-spin rounded-full border-2 border-background/30 border-t-background"
+            className={`size-5 animate-spin rounded-full border-2 ${
+              danger ? "border-current/30 border-t-current" : "border-background/30 border-t-background"
+            }`}
           />
         )}
         {pending ? pendingLabel : children}

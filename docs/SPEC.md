@@ -40,11 +40,18 @@ Confirmed with the project owner (2026-10-05):
 
 ## Features (MVP)
 
-1. **Transaction entry (in-app):** players record their own buys, sells,
-   fees and dividends through a simple mobile-friendly form. Anyone who has
-   the shared password can edit anyone's entries; that's an accepted trust
-   trade-off among friends. Keep an audit trail (who/when created or edited)
-   so mistakes can be traced.
+1. **Transaction entry (in-app, `/trades`, ADR 013):** players record their
+   own buys, sells, fees and dividends through a simple mobile-friendly form.
+   `/trades` lists the players; `/trades/<player>` shows that player's cash,
+   holdings and history and has the add form; each history row opens an
+   edit page with a delete button. Anyone who has the shared password can
+   edit anyone's entries; that's an accepted trust trade-off among friends.
+   Every add or edit stores who ("Entered by", a player's name picked on the
+   form) and when, so mistakes can be traced. Deletes are permanent and
+   leave no trace. Every change is checked against the player's whole
+   ledger (see *Data model*). Dates can't be in the future. Amounts are the
+   EUR total without broker fees; fees are entered as their own fee
+   transactions.
 2. **Daily price ingestion:** once a day, after US market close, fetch closing
    prices for every instrument held by anyone, plus EUR FX rates, and store
    them as history. Crypto trades 24/7, so it uses the price at fetch time.
@@ -100,7 +107,10 @@ from it, never stored as the source of truth. Postgres tables, created by
   - The cash and selling rules are checked at the **end of each day**, over
     the whole ledger, on every create, edit or delete (ADR 007). Logic:
     `src/lib/ledger.ts` (`replay`, `validate`). Ledger ids are strings, so
-    map DB integer ids with `String()`.
+    map DB integer ids with `String()`. The entry form
+    (`src/lib/transactions.ts`) keys instruments by symbol instead, so rule
+    errors name the symbol. It checks and writes each change in one database
+    transaction that locks the player's row (ADR 013).
 - **`price_snapshots`:** `instrument_id`, `date`, `close` (decimal, in the
   instrument's currency), `currency`, `fetched_at`. One row per instrument
   and day. The market-data client returns closes in **major units** with an
@@ -183,11 +193,16 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `FormMessage`; `form-state.ts` is the `useActionState` result shape.
 - `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
   pages, their server actions (`actions.ts`) and client forms.
+- `src/app/trades/`: transaction entry. `page.tsx` picks a player,
+  `[playerId]/` shows their position, history and add form,
+  `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
+  `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
-  access (`players.ts`, `instruments.ts`), and snapshot ingestion
-  (`ingest.ts`). Later: valuation.
+  access (`players.ts`, `instruments.ts`), transaction entry
+  (`transactions.ts`: list, create, edit, delete, position, amount
+  parsing), and snapshot ingestion (`ingest.ts`). Later: valuation.
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
@@ -294,7 +309,8 @@ Where production values live (ADR 009); never in git:
   that `try`: it works by throwing.
 - Every form that submits to a server action uses `SubmitButton`
   (`@/app/_components/submit-button`), so a slow request (cold start) shows a
-  spinner instead of looking dead.
+  spinner instead of looking dead. Pass `danger` for a destructive action
+  such as a delete.
 - Every page renders dynamically (root layout `dynamic = "force-dynamic"`).
   Never make a page static or revalidated: SWA's edge would cache it and
   serve it past the password gate (ADR 006).
