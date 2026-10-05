@@ -1,4 +1,4 @@
-// Snapshot ingestion CLI (ticket 011, ADR 011):
+// Snapshot ingestion CLI (ticket 011, ADR 012):
 //   npm run ingest                         → today's UTC date
 //   npm run ingest -- 2026-11-06           → one date
 //   npm run ingest -- 2026-11-01 2026-11-30 → a range, inclusive (backfill)

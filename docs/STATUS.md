@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 011 done: snapshot ingestion and backfill CLI; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -30,8 +30,14 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 011
   a "waking up the server" hint (`SubmitButton`).
 - **Database schema done (ticket 004, ADR 008):** five tables in
   `db/migrations/001_initial_schema.sql`, a migration runner
-  (`npm run db:migrate`) and a dev seed (`npm run db:seed`). No page reads
-  the database yet.
+  (`npm run db:migrate`) and a dev seed (`npm run db:seed`).
+- **Players and instruments done (ticket 008, ADR 011):** `/players` and
+  `/instruments` list, add and edit them (linked from the home page). These
+  are the first pages that read the database. Instruments are added by Yahoo
+  symbol only and checked with `lookupSymbol`. Checked locally against the
+  dev branch on 2026-10-05, at 375 px width with no horizontal scroll.
+  Production has no players or instruments yet: the owner (or the players)
+  add the real ones before 2026-11-01.
 - **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
   (Frankfurt), Postgres 17. Branch `production` is the real database, and
   `dev` is branched from it for local work and seed data. Migration 001 is
@@ -56,9 +62,9 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 011
   Frankfurter/ECB (FX to EUR), with retries and typed errors. Unit-tested
   with mocks. The live test (`npm run test:live`) passes locally and on a
   GitHub Actions runner (run 37343774152 on 2026-10-05, all 9 passed).
-  Ingestion (011) uses it, and 008 can use `lookupSymbol` to check symbols.
-  The PoC script is deleted.
-- **Snapshot ingestion done (ticket 011, ADR 011):** `src/lib/ingest.ts`
+  `/instruments` uses `lookupSymbol` to check new symbols, and ingestion
+  (011) stores snapshots with it. The PoC script is deleted.
+- **Snapshot ingestion done (ticket 011, ADR 012):** `src/lib/ingest.ts`
   (`ingestDate`, `ingestRange`) and `npm run ingest [date | from to]`. It
   stores a price row per held instrument and an FX row per needed currency
   for every calendar day, carrying the last close forward on weekends and
@@ -77,8 +83,8 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–007, 010 and 011 are done.
-Next: 008 (players and instruments), 012 (valuation) and 013 (daily job),
+lowest number whose dependencies are done. 001–008, 010 and 011 are done.
+Next: 009 (transaction entry form), 012 (valuation) and 013 (daily job),
 all unblocked. For 013: the workflow runs `npm ci` and
 `npm run ingest` with the `DATABASE_URL` secret, and the manual trigger
 passes an optional date through. Ingestion only fetches instruments
@@ -137,6 +143,9 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   22:30 UTC is already the next day in Berlin. Crypto's candle for that UTC
   date is still open at 22:30, so its close is the price at fetch time
   (ADR 010).
+- **Adding instruments needs Yahoo to answer from SWA's backend** (ADR 011).
+  Yahoo has only been verified locally and from GitHub runners so far. If
+  it blocks Azure, nobody can add instruments: add a manual-entry fallback.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).

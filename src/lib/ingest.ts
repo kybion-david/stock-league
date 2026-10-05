@@ -1,4 +1,4 @@
-// Snapshot ingestion (ticket 011, ADR 011): stores one day's closes for every
+// Snapshot ingestion (ticket 011, ADR 012): stores one day's closes for every
 // held instrument, plus the FX rates they need, in price_snapshots and
 // fx_snapshots. Idempotent per day; one failure never stops the run.
 import type { Db } from "@/lib/db/db";

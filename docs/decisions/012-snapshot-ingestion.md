@@ -1,4 +1,4 @@
-# 011. Snapshot ingestion: a row for every day, carry-forward, keep going on failure
+# 012. Snapshot ingestion: a row for every day, carry-forward, keep going on failure
 
 **Status:** Accepted
 **Date:** 2026-10-05
