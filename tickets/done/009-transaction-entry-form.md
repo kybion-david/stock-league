@@ -12,8 +12,8 @@ ticket 007's validation. Store created/updated time and a "by" label.
 
 ## Acceptance criteria
 
-- [ ] Add/edit/delete all four transaction types, validated with clear errors
-- [ ] Player page lists their transactions and current cash + holdings
-- [ ] Audit fields saved on every change
-- [ ] Usable on a phone with no horizontal scrolling
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Add/edit/delete all four transaction types, validated with clear errors
+- [x] Player page lists their transactions and current cash + holdings
+- [x] Audit fields saved on every change
+- [x] Usable on a phone with no horizontal scrolling
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

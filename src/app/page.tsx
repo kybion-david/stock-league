@@ -25,6 +25,12 @@ export default function Home() {
       </p>
       <nav className="grid grid-cols-2 gap-3">
         <Link
+          href="/trades"
+          className="col-span-2 rounded-2xl bg-foreground p-4 font-semibold text-background hover:opacity-90"
+        >
+          ✍️ Enter trades
+        </Link>
+        <Link
           href="/players"
           className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
         >

@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -46,9 +46,20 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 011
   local `.env`. Never seed `production`.
 - **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
   `replay` (cash and holdings on any date) and `validate` (create, edit or
-  delete, re-checked over the whole ledger at end of each day). It's pure
-  and fully unit-tested, but nothing calls it yet: tickets 008/009 wire it to
-  the DB (map integer ids with `String()`) and the form.
+  delete, re-checked over the whole ledger at end of each day). Pure and
+  fully unit-tested. Used by transaction entry (009) and ingestion (011).
+- **Transaction entry done (ticket 009, ADR 013):** `/trades` (linked from
+  the home page as "Enter trades") lists players. `/trades/<id>` shows the
+  player's cash, holdings and history, with a form to add a buy, sell, fee
+  or dividend. Each history row opens an edit page with a delete button.
+  Every change is validated against the whole ledger in a DB transaction
+  that locks the player's row (`src/lib/transactions.ts`, unit-tested on
+  PGlite). The "Entered by" name and timestamps are stored on every add and
+  edit. Checked on 2026-10-05 with Playwright at 375 px against a local
+  Postgres (migrated and seeded): add, overspend error, fee without shares,
+  edit with audit line, cancelled and confirmed delete, refused delete of a
+  buy a later sell needs. No horizontal scroll. Not yet tried on the live
+  site.
 - Agents work in one git worktree per task. They merge their own PR once CI
   is green, then remove the worktree (`AGENTS.md` → Session workflow; the
   owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
@@ -83,9 +94,9 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–008, 010 and 011 are done.
-Next: 009 (transaction entry form), 012 (valuation) and 013 (daily job),
-all unblocked. For 013: the workflow runs `npm ci` and
+lowest number whose dependencies are done. 001–011 are done.
+Next: 012 (valuation) and 013 (daily job), both unblocked; then 019
+(backups) and 014 (leaderboard). For 013: the workflow runs `npm ci` and
 `npm run ingest` with the `DATABASE_URL` secret, and the manual trigger
 passes an optional date through. Ingestion only fetches instruments
 that someone holds, so it does nothing useful until trades exist.
@@ -105,7 +116,7 @@ that someone holds, so it does nothing useful until trades exist.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018. Open: 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -149,5 +160,11 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - `npm audit` reports 5 high-severity advisories in lint-only dev
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).
+- **Deleted transactions leave no trace** (ADR 013): who deleted what
+  isn't recorded. Recovery is re-entering it or a backup (ticket 019). Add a
+  change-log table if a dispute ever needs it.
+- The dev seed's trades are dated November 2026, so until then editing
+  them in dev is refused ("can't be in the future"). Add new trades with
+  today's date to try the edit page.
 - The password gate's only brute-force protection is a 1 s delay per wrong
   attempt (ADR 006). Use a password that isn't trivially guessable.
