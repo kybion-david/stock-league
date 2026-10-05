@@ -79,8 +79,16 @@ Confirmed with the project owner (2026-10-05):
      the arrow keys to pick a day; the list above shows everyone's value and
      return on it, and is the legend. Before the first prices it says when
      the chart starts.
-   - Per-player breakdown of current holdings, their performance, total fees
-     and dividends.
+   - **Player page (`/portfolio/<id>`, `src/lib/portfolio.ts`):** tap a
+     leaderboard row to open it. It shows the player's place ("2nd of 5"),
+     value, total and day change on the leaderboard's day; cash, invested
+     value, fees paid, dividends and the gain or loss booked by selling;
+     each holding (biggest first) with shares, average cost, share of the
+     player's value, gain or loss in € and %, and a ⏳ note if its price is
+     old or missing; instruments sold out of with what they made; their own
+     line of the value chart; and their whole transaction history (each row
+     opens its edit page). Before 2026-11-01 it shows the kick-off date and
+     €1,000 instead of a place.
    - Daily movers: best and worst day, for fun.
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
@@ -212,7 +220,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/_components/`: shared components and helpers (`_` keeps the
   folder out of routing). `SubmitButton` gives any server-action form a
   pending state; `ui.tsx` has the page shell (`Page`), `Field` and
-  `FormMessage`; `form-state.ts` is the `useActionState` result shape.
+  `FormMessage`; `form-state.ts` is the `useActionState` result shape;
+  `score.tsx` has the green/red gain chip (`Change`, `tone`) and the
+  medal emojis (`AWARDS`).
 - `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
   pages, their server actions (`actions.ts`) and client forms.
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
@@ -221,7 +231,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
 - `src/app/page.tsx`: the home page with the leaderboard.
 - `src/app/chart/`: the value chart page and its client component
-  (`value-chart.tsx`).
+  (`value-chart.tsx`), which the player page reuses for one player.
+- `src/app/portfolio/[id]/`: the player page.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -231,8 +242,10 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
   `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath),
   the leaderboard (`leaderboard.ts`: day to show, places, awards,
-  old-price notes, day formatting), and chart layout (`chart.ts`: scales,
-  ticks, line paths, end labels, colour slots).
+  old-price notes, day formatting), chart layout (`chart.ts`: scales,
+  ticks, line paths, end labels, colour slots), and the player page's data
+  (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
+  series and history).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`

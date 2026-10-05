@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -124,8 +124,21 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 015
   errors) against local Postgres databases: the dev seed, 7 players over 28
   synthetic days (with a long name, a player without emoji and stale
   prices), a single day, and a pre-game database. Not yet seen on the live
-  site with real data. `ValueChart` takes any number of series, so 016 can
-  reuse it for one player.
+  site with real data. `ValueChart` takes any number of series; the player
+  page (016) reuses it for one.
+- **Player page done (ticket 016):** each leaderboard row links to
+  `/portfolio/<id>`: place, value, total and day change, cash, invested,
+  fees, dividends, gain booked by selling, holdings with per-holding gain
+  and price notes, sold-out positions, the player's own chart and their
+  whole history (rows open the edit pages). Data comes from
+  `src/lib/portfolio.ts` (built on the leaderboard and valuation, so it
+  always matches the home page; unit-tested on PGlite). The leaderboard's
+  gain chip and medals moved to `src/app/_components/score.tsx`. Checked on
+  2026-10-05 with Playwright at 375 px (light and dark, no horizontal
+  scroll, no console errors) against local Postgres: the dev seed plus a
+  full sell (sold-out list), a buy with no price yet, an old price and a
+  long name without emoji, a pre-game database, and an unknown id (404).
+  Not yet seen on the live site.
 
 ## Deadline
 
@@ -136,9 +149,9 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–015 are done.
+lowest number whose dependencies are done. 001–016 are done.
 Next: 019 (backups, needed before launch), then 018 (launch readiness).
-After launch: 016 (reuse `ValueChart` from `/chart` for one player), 017. In the first days after 2026-11-01, check the
+After launch: 017. In the first days after 2026-11-01, check the
 `daily-ingest` runs in the Actions tab: ingestion only fetches instruments
 that someone holds, so those are the first runs that really fetch prices.
 
@@ -160,7 +173,7 @@ are captured daily from day one):
 004, 006, 007, 008, 009, 010, 011, 012, 013, 014, 019, 018. Open: 019, 018.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
-015, 016, 017. Open: 016, 017.
+015, 016, 017. Open: 017.
 
 ## Open questions (ask the project owner, don't guess)
 
