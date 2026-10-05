@@ -67,7 +67,7 @@ benchmark line.
 ## Data model
 
 A **transaction ledger** per player (ADR 002). Holdings and cash are derived
-from it, never stored as the source of truth. Finalize details in ticket 003.
+from it, never stored as the source of truth. Finalize details in ticket 004.
 
 - **Player:** id, name, (optional) avatar/emoji.
 - **Instrument:** symbol (as used by the data provider), name, type
