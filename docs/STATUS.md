@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (one-worktree-per-task workflow added).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 001 done: hosting and database chosen; one-worktree-per-task workflow added).
 
 ## Current state
 
@@ -12,9 +12,9 @@ session; update at the end of every change. Last updated: 2026-10-05 (one-worktr
   main checkout.
 - **No application code exists yet.**
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
-- Tech stack is *proposed* (ADR 001). ADR 002 (accepted) rules out
-  "data in the repo": the app needs a free hosted database, because players
-  enter trades themselves at any time.
+- Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
+  Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
+  GitHub Actions. Nothing is provisioned yet; that happens in tickets 003, 004 and 006.
 
 ## Deadline
 
@@ -24,13 +24,13 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 ## Next up
 
-The backlog has 18 tickets (`tickets/backlog/`), each sized for one AI
-session. Do the lowest number whose dependencies are done. 001 and 002 are
-research and can run in parallel.
+Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
+lowest number whose dependencies are done. 001 is done; 003 (scaffold) is
+now unblocked. 002 (market data) is independent.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-001, 002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 018.
+002, 003, 004, 005, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -47,4 +47,7 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 
 ## Known issues
 
-None yet.
+- Hybrid Next.js on Azure SWA is in **preview** (ADR 004). Ticket 006 should
+  deploy early; if it blocks, switch to Vercel Hobby with a new ADR.
+- Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
+  needed before launch (ticket 019).
