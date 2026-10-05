@@ -12,8 +12,8 @@ per-holding gain. The dashboard tickets build on this.
 
 ## Acceptance criteria
 
-- [ ] Value per player per date, plus time series over the game
-- [ ] Return %, day change, per-holding gain/loss
-- [ ] Clear behaviour when a price is missing (use last known, flag it)
-- [ ] Unit tests with hand-calculated expectations
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Value per player per date, plus time series over the game
+- [x] Return %, day change, per-holding gain/loss
+- [x] Clear behaviour when a price is missing (use last known, flag it)
+- [x] Unit tests with hand-calculated expectations
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

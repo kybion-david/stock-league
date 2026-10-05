@@ -55,9 +55,14 @@ Confirmed with the project owner (2026-10-05):
 2. **Daily price ingestion:** once a day, after US market close, fetch closing
    prices for every instrument held by anyone, plus EUR FX rates, and store
    them as history. Crypto trades 24/7, so it uses the price at fetch time.
-3. **Valuation:** for each player and day,
+3. **Valuation (ADR 014, `src/lib/valuation.ts`):** for each player and day,
    value = cash + Σ(shares held × close price in EUR).
-   Return % = (value − €1,000) / €1,000.
+   Return % = (value − €1,000) / €1,000. Day change = value − the previous
+   day's value. Per-holding gain = value − cost, with cost tracked as
+   average cost (sells remove cost pro rata and book a realized gain). A
+   missing price or FX rate uses the last known one and is flagged
+   `stale`; a holding with no price at all yet is valued at its cost and
+   flagged `missing`.
 4. **Dashboard:**
    - Leaderboard ranked by current value / return %.
    - Chart of each player's value over time.
@@ -202,7 +207,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
   the market-data client (`market-data.ts`), player and instrument data
   access (`players.ts`, `instruments.ts`), transaction entry
   (`transactions.ts`: list, create, edit, delete, position, amount
-  parsing), and snapshot ingestion (`ingest.ts`). Later: valuation.
+  parsing), snapshot ingestion (`ingest.ts`), and valuation
+  (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
+  `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
