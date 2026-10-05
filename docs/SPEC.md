@@ -73,7 +73,12 @@ Confirmed with the project owner (2026-10-05):
      the prices are from; a player whose value uses an old price, or a new
      buy without a price yet, gets a ⏳ note. Before 2026-11-01 the page shows
      a kick-off countdown and the line-up instead.
-   - Chart of each player's value over time.
+   - **Chart (`/chart`, ADR 018):** every player's value per day from
+     2026-11-01 to the latest day with prices, one coloured line per player
+     with their emoji at the end, and a dashed €1,000 line. Tap, drag or use
+     the arrow keys to pick a day; the list above shows everyone's value and
+     return on it, and is the legend. Before the first prices it says when
+     the chart starts.
    - Per-player breakdown of current holdings, their performance, total fees
      and dividends.
    - Daily movers: best and worst day, for fun.
@@ -184,7 +189,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
   `SITE_PASSWORD`.
-- **Charts:** to be chosen in ticket 015.
+- **Charts (ADR 018):** no library. Plain SVG laid out by `src/lib/chart.ts`.
 - **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
   FX to EUR. Both are keyless and free. Code depends only on the
@@ -215,6 +220,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
   `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
 - `src/app/page.tsx`: the home page with the leaderboard.
+- `src/app/chart/`: the value chart page and its client component
+  (`value-chart.tsx`).
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -223,8 +230,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
   `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath),
-  and the leaderboard (`leaderboard.ts`: day to show, places, awards,
-  old-price notes, day formatting).
+  the leaderboard (`leaderboard.ts`: day to show, places, awards,
+  old-price notes, day formatting), and chart layout (`chart.ts`: scales,
+  ticks, line paths, end labels, colour slots).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
@@ -330,7 +338,8 @@ Where production values live (ADR 009); never in git:
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
   renders `€1,234.56`. Gains and losses use `formatSignedEuroCents`
   (`+€12.34`, `−€0.50`) and `formatSignedPercent` (`+5.23%`), with a real
-  minus sign (−).
+  minus sign (−). Chart axes are the one exception: they show whole euros
+  (`formatAxisEuros` in `src/lib/chart.ts`, `€1,050`).
 - Import from `src` with the `@/` alias (`@/lib/money`).
 - Forms that can fail use `useActionState`. The lib function throws
   `InputError` (`@/lib/db/errors`) with a message for the user, and the
@@ -352,6 +361,7 @@ Where production values live (ADR 009); never in git:
   `src/lib/` gets unit tests; pages don't need them yet.
 - Style with Tailwind utility classes, designed for phone width first
   (~375 px). Colors come from the `--background` / `--foreground` tokens in
-  `src/app/globals.css`, which also handle dark mode.
+  `src/app/globals.css`, which also handle dark mode. Per-player chart colours
+  are the `--series-1`…`--series-8` tokens there (ADR 018); keep their order.
 - Everything that CI runs (lint, typecheck, test, build) must pass before a PR
   is merged.

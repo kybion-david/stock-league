@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -103,7 +103,7 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 014
   to)` (daily points for the chart) and `latestSnapshotDate(db)` ("last
   updated"). `GAME_START_DATE` is `2026-11-01`. Unit-tested with
   hand-calculated numbers, including the dev seed on PGlite. The
-  leaderboard (014) uses `standings`; the chart (015) will use
+  leaderboard (014) uses `standings`; the chart (015) uses
   `playerSeries`.
 - **Leaderboard done (ticket 014, ADR 016):** the home page ranks players
   by value on the latest day with prices, with total and day change, medals,
@@ -115,6 +115,17 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 014
   notes, spoon, truncated name), and a pre-game database with players only.
   Not yet seen on the live site with real data. Trades entered today show
   on it only after tonight's run.
+- **Value chart done (ticket 015, ADR 018):** `/chart` ("The race", linked
+  from the home page) draws every player's value per day since 2026-11-01
+  as plain SVG, with no chart library. Layout math is in `src/lib/chart.ts`
+  (unit-tested). Tap, drag or arrow keys pick a day, and the list above the
+  chart shows values and returns for it. Checked on 2026-10-05 with
+  Playwright at 375 px (light and dark, no horizontal scroll, no console
+  errors) against local Postgres databases: the dev seed, 7 players over 28
+  synthetic days (with a long name, a player without emoji and stale
+  prices), a single day, and a pre-game database. Not yet seen on the live
+  site with real data. `ValueChart` takes any number of series, so 016 can
+  reuse it for one player.
 
 ## Deadline
 
@@ -125,9 +136,9 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–014 are done.
+lowest number whose dependencies are done. 001–015 are done.
 Next: 019 (backups, needed before launch), then 018 (launch readiness).
-After launch: 015 (chart, `playerSeries`), 016, 017. In the first days after 2026-11-01, check the
+After launch: 016 (reuse `ValueChart` from `/chart` for one player), 017. In the first days after 2026-11-01, check the
 `daily-ingest` runs in the Actions tab: ingestion only fetches instruments
 that someone holds, so those are the first runs that really fetch prices.
 
@@ -149,7 +160,7 @@ are captured daily from day one):
 004, 006, 007, 008, 009, 010, 011, 012, 013, 014, 019, 018. Open: 019, 018.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
-015, 016, 017.
+015, 016, 017. Open: 016, 017.
 
 ## Open questions (ask the project owner, don't guess)
 
