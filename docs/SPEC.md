@@ -110,6 +110,13 @@ from it, never stored as the source of truth. Postgres tables, created by
   row per currency and day. The rate is the ECB quote with base EUR
   (1 EUR = `units_per_eur` USD), so EUR value = amount / `units_per_eur`.
   EUR has no rows.
+- **How snapshots are filled (ADR 012, `src/lib/ingest.ts`):** every
+  calendar day gets a price row for each instrument someone holds (net
+  shares > 0 at the end of the day) and an FX row for each non-EUR currency
+  those prices are in. Weekends and holidays carry the last close forward
+  (and the ECB's last published rate), so a missing row means a failed
+  fetch, not a closed market. Rows are upserted: re-running a day updates
+  it, and a failed symbol leaves its stored row alone.
 - **`schema_migrations`:** applied migration file names (managed by the
   migration runner).
 
@@ -178,15 +185,17 @@ the main checkout; see `AGENTS.md` → Session workflow.
   pages, their server actions (`actions.ts`) and client forms.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
-  the market-data client (`market-data.ts`), and player and instrument data
-  access (`players.ts`, `instruments.ts`). Later: valuation.
+  the market-data client (`market-data.ts`), player and instrument data
+  access (`players.ts`, `instruments.ts`), and snapshot ingestion
+  (`ingest.ts`). Later: valuation.
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
   (`InputError`, `isUniqueViolation`, `parseId`).
 - `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
   one that has been merged; add a new file instead.
-- `scripts/`: standalone Node scripts. `db.mts` is the database CLI.
+- `scripts/`: standalone Node scripts. `db.mts` is the database CLI;
+  `ingest.mts` is the snapshot ingestion CLI.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
   Azure SWA), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
@@ -209,6 +218,11 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   the environment or `.env`). Safe to re-run.
 - `npm run db:seed`: insert fake dev players, trades and snapshots. Refuses
   if any players exist, so it can't touch real data.
+- `npm run ingest`: fetch and store snapshots in `DATABASE_URL` for
+  today's **UTC** date. `npm run ingest -- 2026-11-06` does one date, and
+  `npm run ingest -- 2026-11-01 2026-11-30` backfills a range (inclusive).
+  Safe to re-run. Every symbol is attempted, and the exit code is 1 if any
+  failed (ADR 012).
 - `npm run test:live`: live calls to Yahoo and Frankfurter
   (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
   tests never touch the network.

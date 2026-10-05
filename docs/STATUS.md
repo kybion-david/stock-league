@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -62,8 +62,17 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 008
   Frankfurter/ECB (FX to EUR), with retries and typed errors. Unit-tested
   with mocks. The live test (`npm run test:live`) passes locally and on a
   GitHub Actions runner (run 37343774152 on 2026-10-05, all 9 passed).
-  `/instruments` uses `lookupSymbol` to check new symbols; 011 will store
-  snapshots with it. The PoC script is deleted.
+  `/instruments` uses `lookupSymbol` to check new symbols, and ingestion
+  (011) stores snapshots with it. The PoC script is deleted.
+- **Snapshot ingestion done (ticket 011, ADR 012):** `src/lib/ingest.ts`
+  (`ingestDate`, `ingestRange`) and `npm run ingest [date | from to]`. It
+  stores a price row per held instrument and an FX row per needed currency
+  for every calendar day, carrying the last close forward on weekends and
+  holidays. Re-runs upsert. Failures are reported and give exit code 1, but
+  never stop the run. Unit-tested with a fake client. A live run on
+  2026-10-05 (in-memory DB, AAPL/VOD.L/BTC-EUR/SAP.DE, 10-03 to 10-05)
+  behaved as expected. It hasn't been run against Neon yet: nobody holds
+  anything until the game starts. Nothing schedules it yet (013).
 
 ## Deadline
 
@@ -74,8 +83,12 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–008 and 010 are done. Next: 009 (transaction entry form) and 011
-(snapshot ingestion), both unblocked.
+lowest number whose dependencies are done. 001–008, 010 and 011 are done.
+Next: 009 (transaction entry form), 012 (valuation) and 013 (daily job),
+all unblocked. For 013: the workflow runs `npm ci` and
+`npm run ingest` with the `DATABASE_URL` secret, and the manual trigger
+passes an optional date through. Ingestion only fetches instruments
+that someone holds, so it does nothing useful until trades exist.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
@@ -121,10 +134,12 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   starts failing with `RateLimitError` or HTTP 403, use the fallbacks in ADR 003.
 - Yahoo's historical `close` is **split-adjusted**. After a split, a backfill
   of days before it would return prices that don't match the share counts
-  in the ledger. Daily snapshots taken on the day are fine; only re-fetching
-  old dates is affected. Not handled yet.
-- **Day boundary for the daily job (011/013):** pass the client the trading
-  date (the UTC date at 22:30 UTC), not "today in Berlin". During summer time
+  in the ledger. Daily snapshots taken on the day are fine. Only re-fetching
+  old dates with `npm run ingest -- <from> <to>` (or re-running an old date)
+  is affected, so avoid backfilling across a split. Not handled yet.
+- **Day boundary for the daily job (013):** pass the trading date (the UTC
+  date at 22:30 UTC), not "today in Berlin". `npm run ingest` with no date
+  already does this. During summer time
   22:30 UTC is already the next day in Berlin. Crypto's candle for that UTC
   date is still open at 22:30, so its close is the price at fetch time
   (ADR 010).

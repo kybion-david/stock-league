@@ -36,7 +36,7 @@ need. If something looks under-engineered, that may be intentional — check
 | `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. `src/lib/db/` holds the database client, migration runner and seed (ADR 008). |
 | `src/proxy.ts` | Password gate in front of every page and API route (ADR 006). |
 | `db/migrations/` | Numbered SQL migrations. Add new files; never edit merged ones. |
-| `scripts/` | Standalone Node scripts: `db.mts` (migrate/seed CLI) and the standalone-build asset copy. |
+| `scripts/` | Standalone Node scripts: `db.mts` (migrate/seed CLI), `ingest.mts` (snapshot ingestion/backfill CLI) and the standalone-build asset copy. |
 | `infra/` | Terraform for the Azure Static Web App (ADR 009). |
 | `package.json`, `*.config.*`, `tsconfig.json`, `.nvmrc` | App tooling config (ADR 005). |
 
