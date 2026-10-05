@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SubmitButton } from "@/app/_components/submit-button";
 import { safeNextPath } from "@/lib/auth";
 import { login } from "./actions";
 
@@ -34,12 +35,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             Wrong password. Try again.
           </p>
         )}
-        <button
-          type="submit"
-          className="rounded-xl bg-foreground px-4 py-3 text-lg font-semibold text-background"
-        >
-          Enter
-        </button>
+        <SubmitButton pendingLabel="Logging in…">Enter</SubmitButton>
       </form>
     </main>
   );
