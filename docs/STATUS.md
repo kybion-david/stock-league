@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -84,6 +84,17 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 009
   2026-10-05 (in-memory DB, AAPL/VOD.L/BTC-EUR/SAP.DE, 10-03 to 10-05)
   behaved as expected. It hasn't been run against Neon yet: nobody holds
   anything until the game starts. Nothing schedules it yet (013).
+- **Valuation done (ticket 012, ADR 014):** `src/lib/valuation.ts` values
+  every player on any day from the ledger and snapshots: cash, holdings in
+  EUR, return, day change, per-holding gain (average cost) and realized
+  gains, fee and dividend totals. A missing price or FX rate falls back to
+  the last known one and is flagged (`priceStatus`, `stale`); a holding
+  with no price yet is valued at cost. Entry points for the dashboard:
+  `standings(db, date)` (ranked, with day change), `playerSeries(db, from,
+  to)` (daily points for the chart) and `latestSnapshotDate(db)` ("last
+  updated"). `GAME_START_DATE` is `2026-11-01`. Unit-tested with
+  hand-calculated numbers, including the dev seed on PGlite. No page uses
+  it yet (014).
 
 ## Deadline
 
@@ -94,9 +105,10 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–011 are done.
-Next: 012 (valuation) and 013 (daily job), both unblocked; then 019
-(backups) and 014 (leaderboard). For 013: the workflow runs `npm ci` and
+lowest number whose dependencies are done. 001–012 are done.
+Next: 013 (daily job), then 014 (leaderboard, now unblocked) and 019
+(backups). For 014: call `standings(db, date)` with the latest snapshot
+date (or Berlin today), and show the `stale` flag. For 013: the workflow runs `npm ci` and
 `npm run ingest` with the `DATABASE_URL` secret, and the manual trigger
 passes an optional date through. Ingestion only fetches instruments
 that someone holds, so it does nothing useful until trades exist.
@@ -116,7 +128,7 @@ that someone holds, so it does nothing useful until trades exist.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018. Open: 012, 013, 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018. Open: 013, 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
