@@ -91,8 +91,11 @@ gain without needing historical intraday prices.
 
 Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 
-- **App:** Next.js (App Router) + TypeScript, mobile-first. Keep it plain
+- **App:** Next.js 16 (App Router) + TypeScript, mobile-first. Keep it plain
   Next.js, without host-specific features, so it stays portable.
+- **Tooling (ADR 005):** Node 22 LTS (`.nvmrc`), npm, Tailwind CSS 4 for
+  styling, ESLint 9 with `eslint-config-next`, Vitest for tests. CI runs
+  lint, typecheck, test and build on every PR (`.github/workflows/ci.yml`).
 - **Hosting:** Azure Static Web Apps, **Free** plan, with hybrid Next.js
   rendering (server components and API routes on SWA's managed backend).
   Deployed from GitHub Actions. Fallback if needed: Vercel Hobby.
@@ -108,19 +111,32 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 
 ## Structure
 
-No application code yet. See the repo map in `AGENTS.md`.
+One Next.js app at the repo root. See also the repo map in `AGENTS.md`.
 Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
 the main checkout; see `AGENTS.md` → Session workflow.
 
+- `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
+  `route.ts` files). Keep these thin; put logic in `src/lib/`.
+- `src/lib/`: framework-free TypeScript (money formatting now; ledger,
+  valuation and market-data clients later), unit-tested with Vitest.
 - `scripts/`: standalone Node scripts. `poc-market-data.mjs` is the ADR 003
   proof of concept and can be deleted once ticket 010 exists.
+- `.github/workflows/`: `ci.yml` (checks) and `docs-check.yml`.
 
 ## Commands
 
-- `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (Node 18+,
-  no install). Prints AAPL, SAP.DE and EUR/USD for that date.
+Requires Node 22 (`nvm use` reads `.nvmrc`).
 
-Add install, dev, test, build and deploy commands here once they exist.
+- `npm install`: install dependencies (CI uses `npm ci`).
+- `npm run dev`: dev server at http://localhost:3000.
+- `npm run lint`: ESLint.
+- `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
+- `npm test`: Vitest, run once (`npm run test:watch` to watch).
+- `npm run build` / `npm start`: production build and serve.
+- `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (no
+  install). Prints AAPL, SAP.DE and EUR/USD for that date.
+
+Deploy commands come with ticket 006.
 
 ## Configuration
 
@@ -137,4 +153,13 @@ Market data needs no env vars: both sources are keyless (ADR 003).
 - `Instrument.symbol` is the **Yahoo Finance symbol**: `AAPL` (US), `SAP.DE`
   (Xetra), `IWDA.AS` (Euronext Amsterdam), `BTC-EUR` (crypto, quoted in EUR).
   Find symbols with Yahoo's search (ADR 003).
-- More to be added with the scaffold.
+- Format money only with `formatEuroCents` (`src/lib/money.ts`), which
+  renders `€1,234.56`.
+- Import from `src` with the `@/` alias (`@/lib/money`).
+- Tests are `*.test.ts` files next to the code they test. Pure logic in
+  `src/lib/` gets unit tests; pages don't need them yet.
+- Style with Tailwind utility classes, designed for phone width first
+  (~375 px). Colors come from the `--background` / `--foreground` tokens in
+  `src/app/globals.css`, which also handle dark mode.
+- Everything that CI runs (lint, typecheck, test, build) must pass before a PR
+  is merged.

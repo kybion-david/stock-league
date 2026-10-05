@@ -21,5 +21,13 @@ everyone can see how they're doing compared to each other.
 
 ## Running locally
 
-No app yet — see [`docs/STATUS.md`](docs/STATUS.md). The market-data proof of
-concept runs with `node scripts/poc-market-data.mjs [YYYY-MM-DD]` (Node 18+).
+Needs Node 22 (`nvm use`).
+
+```sh
+npm install
+npm run dev     # http://localhost:3000
+```
+
+Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
+is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
+page so far; see [`docs/STATUS.md`](docs/STATUS.md).
