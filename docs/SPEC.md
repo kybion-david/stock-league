@@ -67,24 +67,52 @@ benchmark line.
 ## Data model
 
 A **transaction ledger** per player (ADR 002). Holdings and cash are derived
-from it, never stored as the source of truth. Finalize details in ticket 004.
+from it, never stored as the source of truth. Postgres tables, created by
+`db/migrations/` (ADR 008; the SQL file is the exact definition):
 
-- **Player:** id, name, (optional) avatar/emoji.
-- **Instrument:** symbol (as used by the data provider), name, type
-  (stock | etf | crypto), currency, exchange.
-- **Transaction:** player, date, type (`buy | sell | fee | dividend`),
-  instrument (buy/sell/dividend), shares (buy/sell, decimal),
-  EUR amount (cents; what the broker charged or paid), note,
-  created/updated at + by-whom label.
+- **`players`:** `id`, `name` (unique, non-blank), `emoji` (optional),
+  `created_at`.
+- **`instruments`:** `id`, `symbol` (unique; the Yahoo symbol), `name`,
+  `type` (`stock | etf | crypto`), `currency` (as Yahoo reports it: usually
+  ISO 4217, but London listings report `GBp`, pence), `exchange` (optional),
+  `created_at`.
+- **`transactions`:** `id`, `player_id`, `date` (game day), `type`
+  (`buy | sell | fee | dividend`), `instrument_id`, `shares`, `amount_cents`,
+  `note`, `created_at` / `created_by`, `updated_at` / `updated_by` (free-text
+  labels such as the player's name, used as the audit trail).
+  - `amount_cents`: integer > 0, what the broker charged or paid in EUR. The
+    sign comes from `type`.
+  - `shares`: decimal > 0 with at most 8 significant decimal places
+    (trailing zeros are fine). Required for
+    buy/sell, and must be empty for fee/dividend.
+  - `instrument_id`: required for buy/sell/dividend, optional for fee (e.g. a
+    fee belonging to a trade).
   - `buy`: cash −= amount, shares += n
   - `sell`: cash += amount, shares −= n (can't sell more than held)
   - `fee`: cash −= amount
   - `dividend`: cash += amount
   - The cash and selling rules are checked at the **end of each day**, over
     the whole ledger, on every create, edit or delete (ADR 007). Logic:
-    `src/lib/ledger.ts` (`replay`, `validate`).
-- **PriceSnapshot:** instrument, date, close price, currency.
-- **FxSnapshot:** date, currency, rate to EUR.
+    `src/lib/ledger.ts` (`replay`, `validate`). Ledger ids are strings, so
+    map DB integer ids with `String()`.
+- **`price_snapshots`:** `instrument_id`, `date`, `close` (decimal, in the
+  instrument's currency), `currency`, `fetched_at`. One row per instrument
+  and day.
+- **`fx_snapshots`:** `date`, `currency`, `units_per_eur`, `fetched_at`. One
+  row per currency and day. The rate is the ECB quote with base EUR
+  (1 EUR = `units_per_eur` USD), so EUR value = amount / `units_per_eur`.
+  EUR has no rows.
+- **`schema_migrations`:** applied migration file names (managed by the
+  migration runner).
+
+The database enforces only shape (types, positive amounts, required fields
+per type, uniqueness). Game rules such as €1,000 starting cash, the −€50
+floor and no overselling are checked in code (ticket 007), not with database
+constraints.
+
+In TypeScript, rows come back as: `integer` → number, `numeric` → exact
+string (never parse it to a float for storage or comparison), `date` →
+`"YYYY-MM-DD"` string, `timestamptz` → `Date`.
 
 Players enter **share count + total EUR paid/received** for each trade, which
 is what their broker shows. That gives exact cash tracking and per-holding
@@ -104,6 +132,9 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   Deployed from GitHub Actions. Fallback if needed: Vercel Hobby.
 - **Database:** Neon Free (serverless Postgres), EU region. Connected with
   `DATABASE_URL` from the app and from the daily job.
+- **Database access (ADR 008):** `postgres` (postgres.js) driver, no ORM,
+  plain SQL migrations, PGlite (in-memory Postgres) for tests, and `tsx`
+  to run TypeScript scripts.
 - **Daily job:** GitHub Actions scheduled workflow at 22:30 UTC.
 - **Auth:** the shared-password gate is implemented in the app (ADR 002),
   because SWA's built-in password protection isn't on the Free plan.
@@ -123,8 +154,14 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money formatting (`money.ts`) and ledger replay/validation (`ledger.ts`).
   Later: valuation and market-data clients.
-- `scripts/`: standalone Node scripts. `poc-market-data.mjs` is the ADR 003
-  proof of concept and can be deleted once ticket 010 exists.
+- `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
+  (`postgres.ts`, with `getDb()` for the app), the PGlite test client
+  (`pglite.ts`), the migration runner and the dev seed.
+- `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
+  one that has been merged; add a new file instead.
+- `scripts/`: standalone Node scripts. `db.mts` is the database CLI.
+  `poc-market-data.mjs` is the ADR 003 proof of concept and can be deleted
+  once ticket 010 exists.
 - `.github/workflows/`: `ci.yml` (checks) and `docs-check.yml`.
 
 ## Commands
@@ -137,6 +174,10 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
 - `npm test`: Vitest, run once (`npm run test:watch` to watch).
 - `npm run build` / `npm start`: production build and serve.
+- `npm run db:migrate`: apply pending migrations to `DATABASE_URL` (from
+  the environment or `.env`). Safe to re-run.
+- `npm run db:seed`: insert fake dev players, trades and snapshots. Refuses
+  if any players exist, so it can't touch real data.
 - `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (no
   install). Prints AAPL, SAP.DE and EUR/USD for that date.
 
@@ -145,6 +186,13 @@ Deploy commands come with ticket 006.
 ## Configuration
 
 Env vars are listed in `.env.example`. Document each one here once it's in use.
+
+- `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
+  connection string (host contains `-pooler`) with `sslmode=require`, as
+  copied from Neon (`connect()` drops `channel_binding`, which postgres.js
+  can't handle). For local development, use a separate Neon branch (free)
+  or any local Postgres, never the production database. The app reads it lazily via
+  `getDb()`, so builds and tests don't need it.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
 
@@ -162,6 +210,10 @@ Market data needs no env vars: both sources are keyless (ADR 003).
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
   renders `€1,234.56`.
 - Import from `src` with the `@/` alias (`@/lib/money`).
+- Data-access functions take a `Db` argument (`@/lib/db/db`) instead of
+  importing the client, so tests can pass a PGlite `createTestDb()` loaded
+  with the real migrations. Write plain SQL with `$1` parameters, and never
+  build SQL by concatenating strings.
 - Tests are `*.test.ts` files next to the code they test. Pure logic in
   `src/lib/` gets unit tests; pages don't need them yet.
 - Style with Tailwind utility classes, designed for phone width first

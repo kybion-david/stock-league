@@ -33,8 +33,9 @@ need. If something looks under-engineered, that may be intentional — check
 | `.github/` | PR template and CI workflows (`ci` = lint/typecheck/test/build, `docs-check`). |
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
 | `src/app/` | Next.js App Router pages and layouts. |
-| `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. |
-| `scripts/` | Standalone Node scripts (currently the market-data proof of concept from ADR 003). |
+| `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. `src/lib/db/` holds the database client, migration runner and seed (ADR 008). |
+| `db/migrations/` | Numbered SQL migrations. Add new files; never edit merged ones. |
+| `scripts/` | Standalone Node scripts: `db.mts` (migrate/seed CLI) and the market-data proof of concept from ADR 003. |
 | `package.json`, `*.config.*`, `tsconfig.json`, `.nvmrc` | App tooling config (ADR 005). |
 
 When you add folders, add them to this map **and** to the Structure section

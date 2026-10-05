@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 007 done: ledger replay and validation, ADR 007).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 004 done: database schema, migrations and seed, ADR 008; ticket 007 done: ledger logic, ADR 007).
 
 ## Current state
 
@@ -11,12 +11,18 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 007
   Tailwind on Node 22. It's only a placeholder home page plus
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
   typecheck, test and build on every PR. Nothing is deployed and there's no
-  database or password gate yet.
+  password gate yet.
+- **Database schema done (ticket 004, ADR 008):** five tables in
+  `db/migrations/001_initial_schema.sql`, a migration runner
+  (`npm run db:migrate`) and a dev seed (`npm run db:seed`). It has been
+  verified on PGlite only (in tests, and the CLI against a PGlite socket
+  server), **not on Neon**: no Neon project exists yet. No page reads the
+  database yet.
 - **Ledger logic done (ticket 007, ADR 007):** `src/lib/ledger.ts` has
   `replay` (cash and holdings on any date) and `validate` (create, edit or
   delete, re-checked over the whole ledger at end of each day). It's pure
   and fully unit-tested, but nothing calls it yet: tickets 008/009 wire it to
-  the DB and the form. The DB `shares` column must allow 8 decimal places.
+  the DB (map integer ids with `String()`) and the form.
 - Agents work in one git worktree per task. They merge their own PR once CI
   is green, then remove the worktree (`AGENTS.md` → Session workflow; the
   owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
@@ -24,7 +30,7 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 007
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
-  GitHub Actions. Nothing is provisioned yet; that happens in tickets 004 and 006.
+  GitHub Actions. Nothing is provisioned yet.
 - **Market data decided (ADR 003):** Yahoo Finance chart API (prices, crypto,
   symbol search) + Frankfurter/ECB (FX). Keyless, so no env vars. Verified
   with `scripts/poc-market-data.mjs` against 2026-09-30.
@@ -38,10 +44,14 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–003 and 007 are done; 004
-(database schema and seed) is next. 005 (password gate) also only needs 003,
-so it can run in parallel. Do 006 (deploy) right after 005 because of the
-SWA preview risk below.
+lowest number whose dependencies are done. 001–004 and 007 are done. 005
+(password gate) is next; 008 needs it too. Do 006 (deploy) right after 005
+because of the SWA preview risk below.
+
+**Owner action needed (before or during 006):** create the Neon Free
+project in an EU region, put its pooled connection string in `.env` as
+`DATABASE_URL` (and later in GitHub/SWA secrets), then run
+`npm run db:migrate`. Agents can't create the Neon account.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
@@ -64,6 +74,8 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 
 - Hybrid Next.js on Azure SWA is in **preview** (ADR 004). Ticket 006 should
   deploy early; if it blocks, switch to Vercel Hobby with a new ADR.
+- Migrations have only run on PGlite (Postgres 17), never on Neon. The first
+  `npm run db:migrate` against Neon is the real check.
 - Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
   needed before launch (ticket 019).
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
