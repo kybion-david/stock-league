@@ -20,14 +20,15 @@ lands anywhere public.
 - **`pg_dump --format=custom`** (compressed, restorable table by table) of
   the production database, without owners or grants, so it restores into
   any database or role.
-- **Every tool runs from the `postgres:17` Docker image.** pg_dump must be
+- **Every tool runs from the `postgres:18` Docker image** (Neon production
+  runs Postgres 18). pg_dump must be
   at least the server's major version, and the runner's own client is older.
 - **Connect directly, not through the pooler.** The workflow removes
   `-pooler` from the `DATABASE_URL` secret's host to get the same endpoint's
   direct host, so no new secret is needed. Neon advises against pg_dump
   through PgBouncer.
 - **Every run proves its dump restores.** The dump is restored in one
-  transaction into a throwaway Postgres 17 service container. The run fails
+  transaction into a throwaway Postgres 18 service container. The run fails
   if that fails or the restored `schema_migrations` is empty, and it writes
   per-table row counts to the run summary.
 - **Stored as a workflow artifact** named `stock-league-YYYY-MM-DD`, kept
@@ -51,8 +52,9 @@ Alternatives considered:
   private-repo artifact storage, and a run takes about a minute of Actions
   time.
 - Backups older than 90 days are gone. Download one by hand to keep it longer.
-- When Neon moves production to Postgres 18, the dump step fails with a
-  version mismatch. Bump the image tag in the workflow.
+- When Neon moves production to a newer major version, the dump step
+  fails with a version mismatch. Bump the image tag in the workflow (it
+  happened once: the first real run found Postgres 18, not 17).
 - A failed scheduled run shows red in Actions and emails whoever last
   edited the cron line, like the daily job (ADR 015).
 - Restoring is manual: `docs/SPEC.md` → Commands.

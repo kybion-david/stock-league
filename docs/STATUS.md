@@ -39,7 +39,8 @@ session; update at the end of every change. Last updated: 2026-10-05 (open PRs 2
   Production has no players or instruments yet: the owner (or the players)
   add the real ones before 2026-11-01.
 - **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
-  (Frankfurt), Postgres 17. Branch `production` is the real database, and
+  (Frankfurt), Postgres 18 (the server reports 18.6; earlier docs said
+  17). Branch `production` is the real database, and
   `dev` is branched from it for local work and seed data. Migration 001 is
   applied on both, and `dev` is seeded. The production pooled string is in
   the GitHub secret `DATABASE_URL`, and the dev string is in the owner's
@@ -163,14 +164,16 @@ session; update at the end of every change. Last updated: 2026-10-05 (open PRs 2
   card is now "In holdings" (it's the market value, not what was paid).
 - **Daily backup done (ticket 019, ADR 017):** `.github/workflows/daily-backup.yml`
   dumps production at 03:17 UTC, restores the dump into a throwaway
-  Postgres 17 in the same run to prove it works, and keeps it as an
+  Postgres 18 in the same run to prove it works, and keeps it as an
   artifact for 90 days. Restore steps are in `docs/SPEC.md` → Commands. Tested
   locally on 2026-10-05 against a seeded Postgres 17: the dump, the
   in-run restore check, a restore into an empty database, an in-place
   `--clean` restore over a damaged database (migrations and inserts still
-  worked afterwards), and the failure on an empty dump. The PR run dumped
-  the real production database. A restore *into Neon* hasn't been tried
-  yet: Neon is plain Postgres 17, so the documented steps should just work.
+  worked afterwards), and the failure on an empty dump. The first run
+  against production (PR 28, 2026-10-05) failed: Neon runs Postgres 18 and
+  `pg_dump` 17 refuses a newer server, so every tool now uses `postgres:18`.
+  A restore *into Neon* hasn't been tried yet: Neon is plain Postgres 18,
+  so the documented steps should just work.
 
 ## Deadline
 

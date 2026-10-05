@@ -28,7 +28,7 @@ jobs:
     services:
       # Scratch database the dump is restored into as a check. Gone after the run.
       scratch:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: scratch
         ports:
@@ -41,9 +41,9 @@ jobs:
     env:
       SCRATCH_URL: postgresql://postgres:scratch@localhost:5432/postgres
     steps:
-      # pg_dump must be at least the server's major version (Neon runs 17),
+      # pg_dump must be at least the server's major version (Neon runs 18),
       # and the runner's own client is older, so every tool runs from the
-      # postgres:17 image.
+      # postgres:18 image.
       - name: Dump production
         id: dump
         env:
@@ -53,7 +53,7 @@ jobs:
           # Neon's pooler (the "-pooler" host) doesn't suit pg_dump; use the
           # direct host of the same endpoint.
           export PGURL="${DATABASE_URL/-pooler./.}"
-          docker run --rm --network host -e PGURL postgres:17 \
+          docker run --rm --network host -e PGURL postgres:18 \
             sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$PGURL"' > "$name.dump"
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "Dumped $(du -h "$name.dump" | cut -f1) to $name.dump"
@@ -62,9 +62,9 @@ jobs:
         env:
           FILE: ${{ steps.dump.outputs.name }}.dump
         run: |
-          docker run --rm --network host -v "$PWD:/work" postgres:17 \
+          docker run --rm --network host -v "$PWD:/work" postgres:18 \
             pg_restore --no-owner --no-acl --single-transaction --dbname="$SCRATCH_URL" "/work/$FILE"
-          counts=$(docker run --rm --network host postgres:17 \
+          counts=$(docker run --rm --network host postgres:18 \
             psql "$SCRATCH_URL" -v ON_ERROR_STOP=1 -At -F ' | ' -c "
               select 'schema_migrations', count(*) from schema_migrations
               union all select 'players', count(*) from players

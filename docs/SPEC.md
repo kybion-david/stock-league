@@ -201,7 +201,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   retries once after 10 minutes, and a failed run shows red in Actions and
   emails whoever last edited the schedule.
 - **Backups (ADR 017):** `.github/workflows/daily-backup.yml` dumps
-  production with `pg_dump` (from the `postgres:17` image, over Neon's
+  production with `pg_dump` (from the `postgres:18` image, over Neon's
   direct host) at 03:17 UTC, restores the dump into a throwaway Postgres to
   check it, and keeps it as a workflow artifact for 90 days.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
@@ -317,8 +317,8 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - **Download a backup:** open a `daily-backup` run in the Actions tab and
   download the `stock-league-YYYY-MM-DD` artifact, or
   `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump`.
-- **Restore** needs `pg_restore` 17 or newer. Without a local install, run
-  it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:17 pg_restore …`.
+- **Restore** needs `pg_restore` 18 or newer. Without a local install, run
+  it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:18 pg_restore …`.
   Use Neon's **direct** connection string (the host without `-pooler`).
   1. Try it on a scratch database first: in the Neon console, add an empty
      database (for example `restore_test`) to the `dev` branch, then
