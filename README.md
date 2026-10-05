@@ -31,7 +31,8 @@ npm run db:seed        # optional fake players and trades
 npm run dev            # http://localhost:3000
 ```
 
-Tests don't need a database: they use an in-memory Postgres (PGlite).
+Tests don't need a database: they use an in-memory Postgres (PGlite). They
+don't call market-data APIs either; `npm run test:live` does.
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
 is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
