@@ -259,6 +259,9 @@ Where production values live (ADR 009); never in git:
 - Format money only with `formatEuroCents` (`src/lib/money.ts`), which
   renders `€1,234.56`.
 - Import from `src` with the `@/` alias (`@/lib/money`).
+- Every page renders dynamically (root layout `dynamic = "force-dynamic"`).
+  Never make a page static or revalidated: SWA's edge would cache it and
+  serve it past the password gate (ADR 006).
 - Data-access functions take a `Db` argument (`@/lib/db/db`) instead of
   importing the client, so tests can pass a PGlite `createTestDb()` loaded
   with the real migrations. Write plain SQL with `$1` parameters, and never

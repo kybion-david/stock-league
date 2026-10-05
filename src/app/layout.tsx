@@ -12,6 +12,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Render every page per request and never prerender. A prerendered page is
+// cached at Azure SWA's edge (s-maxage of a year) and then served to anyone,
+// without running the password gate in src/proxy.ts (ADR 006).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Stock League",
   description: "A private investment game among friends.",

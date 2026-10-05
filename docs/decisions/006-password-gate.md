@@ -33,6 +33,13 @@ session table and no new env vars.
   when entering a transaction (SPEC → Features).
 - The only brute-force protection is the 1 s delay. That's acceptable for an
   unlisted hobby site, so pick a password that isn't trivially guessable.
+- **Every page must render dynamically** (`export const dynamic =
+  "force-dynamic"` in the root layout, added 2026-10-05). Azure SWA caches
+  prerendered pages at its edge (`s-maxage` of a year) and serves them
+  without running the proxy. The first deploy did this: after one logged-in
+  visit, `/` was served to anyone. `src/app/layout.test.ts` guards the line.
+  Never add `force-static`, `revalidate` or `generateStaticParams` to a
+  gated page.
 - Server components and route handlers don't re-check the cookie: the proxy
   is the only gate. Any new top-level path is covered automatically unless
   it's added to the matcher's exclusions.
