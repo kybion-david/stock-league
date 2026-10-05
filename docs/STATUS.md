@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -83,7 +83,15 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 012
   never stop the run. Unit-tested with a fake client. A live run on
   2026-10-05 (in-memory DB, AAPL/VOD.L/BTC-EUR/SAP.DE, 10-03 to 10-05)
   behaved as expected. It hasn't been run against Neon yet: nobody holds
-  anything until the game starts. Nothing schedules it yet (013).
+  anything until the game starts. The daily job (013) runs it.
+- **Daily job done (ticket 013, ADR 015):** `.github/workflows/daily-ingest.yml`
+  runs `npm run ingest` against production every day at 22:30 UTC, with a
+  manual trigger that takes an optional date. It passes the UTC date of 6
+  hours before the run (so a late run still gets the right day), retries
+  once after 10 minutes, and a failed run shows red in Actions and emails
+  whoever last edited the cron line. First production run: pending (it can
+  only be started once the workflow is on `main`). Until trades exist it
+  stores nothing ("0 prices, 0 FX rates").
 - **Valuation done (ticket 012, ADR 014):** `src/lib/valuation.ts` values
   every player on any day from the ledger and snapshots: cash, holdings in
   EUR, return, day change, per-holding gain (average cost) and realized
@@ -105,13 +113,12 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–012 are done.
-Next: 013 (daily job), then 014 (leaderboard, now unblocked) and 019
-(backups). For 014: call `standings(db, date)` with the latest snapshot
-date (or Berlin today), and show the `stale` flag. For 013: the workflow runs `npm ci` and
-`npm run ingest` with the `DATABASE_URL` secret, and the manual trigger
-passes an optional date through. Ingestion only fetches instruments
-that someone holds, so it does nothing useful until trades exist.
+lowest number whose dependencies are done. 001–013 are done.
+Next: 014 (leaderboard), then 019 (backups). For 014: call
+`standings(db, date)` with the latest snapshot date (or Berlin today), and
+show the `stale` flag. In the first days after 2026-11-01, check the
+`daily-ingest` runs in the Actions tab: ingestion only fetches instruments
+that someone holds, so those are the first runs that really fetch prices.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
@@ -128,7 +135,7 @@ that someone holds, so it does nothing useful until trades exist.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018. Open: 013, 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 019, 018. Open: 019, 018.
 014 (leaderboard) is strongly wanted for launch too.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
@@ -145,6 +152,10 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 
 ## Known issues
 
+- **GitHub can start a scheduled run late or skip it** under load (ADR 015).
+  Late runs still ingest the right day. A skipped or twice-failed day has
+  no rows until someone runs `daily-ingest` by hand with that date
+  (`docs/SPEC.md` → Commands).
 - Hybrid Next.js on Azure SWA is in **preview** (ADR 004). The first deploy
   works (2026-10-05), but SWA's edge caches prerendered pages past the
   proxy, so every page must stay dynamic (ADR 006). If SWA causes more
@@ -160,9 +171,8 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   in the ledger. Daily snapshots taken on the day are fine. Only re-fetching
   old dates with `npm run ingest -- <from> <to>` (or re-running an old date)
   is affected, so avoid backfilling across a split. Not handled yet.
-- **Day boundary for the daily job (013):** pass the trading date (the UTC
-  date at 22:30 UTC), not "today in Berlin". `npm run ingest` with no date
-  already does this. During summer time
+- **Day boundary for the daily job:** it ingests the trading date (the UTC
+  date at 22:30 UTC), not "today in Berlin" (ADR 015). During summer time
   22:30 UTC is already the next day in Berlin. Crypto's candle for that UTC
   date is still open at 22:30, so its close is the price at fetch time
   (ADR 010).

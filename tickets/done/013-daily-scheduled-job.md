@@ -11,8 +11,8 @@ manual triggering for a given date. A failed run must be visible.
 
 ## Acceptance criteria
 
-- [ ] Scheduled run at 22:30 UTC plus manual trigger with optional date
-- [ ] Uses production secrets stored as GitHub secrets
-- [ ] Failed run fails the workflow (visible in Actions); optional notification
+- [x] Scheduled run at 22:30 UTC plus manual trigger with optional date
+- [x] Uses production secrets stored as GitHub secrets
+- [x] Failed run fails the workflow (visible in Actions); optional notification
 - [ ] **Running in production before 2026-11-01**
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

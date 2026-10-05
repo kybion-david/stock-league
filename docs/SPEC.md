@@ -167,7 +167,11 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Database access (ADR 008):** `postgres` (postgres.js) driver, no ORM,
   plain SQL migrations, PGlite (in-memory Postgres) for tests, and `tsx`
   to run TypeScript scripts.
-- **Daily job:** GitHub Actions scheduled workflow at 22:30 UTC.
+- **Daily job (ADR 015):** GitHub Actions scheduled workflow
+  (`.github/workflows/daily-ingest.yml`) at 22:30 UTC. It runs
+  `npm run ingest` against production with the `DATABASE_URL` secret,
+  retries once after 10 minutes, and a failed run shows red in Actions and
+  emails whoever last edited the schedule.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
@@ -220,7 +224,7 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `ingest.mts` is the snapshot ingestion CLI.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
-  Azure SWA), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
+  Azure SWA), `daily-ingest.yml` (the daily job, ADR 015), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
   and on PRs that touch `src/lib/market-data*.ts`).
 - `infra/`: Terraform for the Azure resource group and Static Web App
   (ADR 009). State is kept outside the repo.
@@ -245,6 +249,12 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   `npm run ingest -- 2026-11-01 2026-11-30` backfills a range (inclusive).
   Safe to re-run. Every symbol is attempted, and the exit code is 1 if any
   failed (ADR 012).
+- **Run the daily job by hand** (to redo or fill a day in production):
+  `gh workflow run daily-ingest -f date=2026-11-06`, or *Run workflow* on
+  the Actions tab. Without a date it ingests the UTC date 6 hours ago, so
+  between 06:00 and 22:00 UTC pass yesterday's date (ADR 015). For a range,
+  run `npm run ingest -- <from> <to>` locally with the production
+  `DATABASE_URL`.
 - `npm run test:live`: live calls to Yahoo and Frankfurter
   (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
   tests never touch the network.
