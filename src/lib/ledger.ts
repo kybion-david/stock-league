@@ -21,7 +21,7 @@ export interface LedgerTransaction {
   /** Game day, `YYYY-MM-DD` (Europe/Berlin). */
   date: string;
   type: TransactionType;
-  /** Required for buy, sell and dividend; absent for fee. */
+  /** Required for buy, sell and dividend; optional for fee (e.g. a trade's commission). */
   instrumentId?: string | null;
   /** Decimal string such as `"0.5"` or `"1.50000000"`. Buy and sell only. */
   shares?: string | null;
@@ -145,9 +145,7 @@ export function validateTransaction(tx: TransactionInput): string[] {
   }
 
   const hasInstrument = tx.instrumentId != null && tx.instrumentId !== "";
-  if (tx.type === "fee") {
-    if (hasInstrument) errors.push("A fee doesn't take an instrument.");
-  } else if (!hasInstrument) {
+  if (tx.type !== "fee" && !hasInstrument) {
     errors.push(`A ${tx.type} needs an instrument.`);
   }
 

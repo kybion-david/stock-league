@@ -106,6 +106,9 @@ describe("validateTransaction", () => {
     expect(validateTransaction({ ...ok, type: "sell" })).toEqual([]);
     expect(validateTransaction({ date: "2026-11-01", type: "fee", amountCents: 1 })).toEqual([]);
     expect(
+      validateTransaction({ date: "2026-11-01", type: "fee", instrumentId: "AAPL", amountCents: 1 }),
+    ).toEqual([]);
+    expect(
       validateTransaction({ date: "2026-11-01", type: "dividend", instrumentId: "AAPL", amountCents: 1 }),
     ).toEqual([]);
   });
@@ -126,9 +129,8 @@ describe("validateTransaction", () => {
     );
   });
 
-  it("rejects an instrument or shares on a fee, and shares on a dividend", () => {
+  it("rejects shares on a fee or a dividend", () => {
     expect(validateTransaction({ ...ok, type: "fee" })).toEqual([
-      "A fee doesn't take an instrument.",
       "A fee doesn't take a number of shares.",
     ]);
     expect(validateTransaction({ ...ok, type: "dividend" })).toEqual([
