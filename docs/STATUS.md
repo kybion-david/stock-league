@@ -57,18 +57,18 @@ lowest number whose dependencies are done. 001–004, 007 and 010 are done. 005
 dependencies done and can run in parallel with 005. Do 006 (deploy) right after 005
 because of the SWA preview risk below.
 
-**Secrets in place (2026-10-05):** the GitHub secrets
-`AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL` exist. The SWA app
-setting `SITE_PASSWORD` on `swa-stock-league` is set to the real shared
-password. The owner has it; it's deliberately not in the repo. Change it with
-`az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league
---setting-names SITE_PASSWORD=...`.
-
-**Still to do:** add `DATABASE_URL` (the production pooled string) as an SWA
-app setting before any page reads the database. Optionally, reset the Neon
-`neondb_owner` password, which was shared in an agent chat, then update
-`.env` and the GitHub secret. The `.env` file isn't shared between
-worktrees: copy it from the main checkout when a task needs the database.
+**Secrets in place (2026-10-05):**
+- GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
+  (production pooled string).
+- SWA app settings on `swa-stock-league`: `SITE_PASSWORD` (the real shared
+  password) and `DATABASE_URL` (production). Change one with
+  `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league
+  --setting-names NAME=value`.
+- The shared password is written down in the owner's local `.env`
+  (`SITE_PASSWORD`, in the main checkout). That file is gitignored and not
+  shared between worktrees: copy it from the main checkout when a task needs
+  the database or the password. The owner chose to keep the Neon password
+  that was shared in an agent chat.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
