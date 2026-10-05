@@ -72,7 +72,8 @@ Confirmed with the project owner (2026-10-05):
      the game starts or while everyone is level. The header says which day
      the prices are from; a player whose value uses an old price, or a new
      buy without a price yet, gets a ⏳ note. Before 2026-11-01 the page shows
-     a kick-off countdown and the line-up instead.
+     a kick-off countdown and the line-up instead. Each row opens that
+     player's page (› on the right).
    - **Chart (`/chart`, ADR 018):** every player's value per day from
      2026-11-01 to the latest day with prices, one coloured line per player
      with their emoji at the end, and a dashed €1,000 line. Tap, drag or use
@@ -238,8 +239,11 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
   `[playerId]/` shows their position, history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
-  `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
+  `transaction-forms.tsx`, `format.ts` (signed amounts) and `history.tsx`
+  (the transaction list, also used by the player page) sit alongside.
 - `src/app/page.tsx`: the home page with the leaderboard.
+- `src/app/not-found.tsx`: the 404 page for unknown URLs and missing
+  players, instruments or transactions.
 - `src/app/chart/`: the value chart page and its client component
   (`value-chart.tsx`), which the player page reuses for one player.
 - `src/app/portfolio/[id]/`: the player page.

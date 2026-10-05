@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Page } from "@/app/_components/ui";
 import { getDb } from "@/lib/db/postgres";
 import { formatDay } from "@/lib/leaderboard";
@@ -5,6 +6,8 @@ import { formatEuroCents, formatSignedEuroCents, formatSignedPercent } from "@/l
 import type { Player } from "@/lib/players";
 import { funStats, type PickMove, type PickResult, type PlayerDay } from "@/lib/stats";
 import { GAME_START_DATE } from "@/lib/valuation";
+
+export const metadata: Metadata = { title: "Fun stats · Stock League" };
 
 export default async function StatsPage() {
   const stats = await funStats(getDb());
@@ -26,7 +29,7 @@ export default async function StatsPage() {
         As of {formatDay(stats.date)}, day {stats.days} of the game.
       </p>
 
-      <Section title="Today">
+      <Section title={`Movers on ${formatDay(stats.date)}`}>
         <Stat emoji="🚀" title="Top gainer">
           <PlayerDayLine day={stats.topGainer} empty="Nobody went up." />
         </Stat>

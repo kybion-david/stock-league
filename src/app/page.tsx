@@ -132,6 +132,9 @@ function Row({ row, started }: { row: LeaderboardRow; started: boolean }) {
           <span className="shrink-0 text-lg font-semibold tabular-nums">
             {formatEuroCents(row.valueCents)}
           </span>
+          <span className="-ml-1 shrink-0 text-foreground/40" aria-hidden>
+            ›
+          </span>
         </div>
         {started && (
           <div className="flex flex-wrap gap-2 pl-11 text-sm">

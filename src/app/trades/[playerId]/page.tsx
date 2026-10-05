@@ -9,10 +9,14 @@ import { formatEuroCents } from "@/lib/money";
 import { getPlayer, listPlayers } from "@/lib/players";
 import { berlinToday, listTransactions, position } from "@/lib/transactions";
 import { addTransactionAction } from "../actions";
-import { signedAmount, TYPE_LABELS } from "../format";
+import { TransactionHistory } from "../history";
 import { TransactionForm } from "../transaction-forms";
 
-export const metadata: Metadata = { title: "Trades · Stock League" };
+export async function generateMetadata({ params }: PageProps<"/trades/[playerId]">): Promise<Metadata> {
+  const id = parseId((await params).playerId);
+  const player = id === null ? null : await getPlayer(getDb(), id);
+  return { title: `${player ? `${player.name}'s trades` : "Not found"} · Stock League` };
+}
 
 export default async function PlayerTradesPage({ params }: PageProps<"/trades/[playerId]">) {
   const id = parseId((await params).playerId);
@@ -50,6 +54,9 @@ export default async function PlayerTradesPage({ params }: PageProps<"/trades/[p
             ))}
           </ul>
         )}
+        <Link href={`/portfolio/${player.id}`} className="text-sm underline">
+          See how {player.name} is doing →
+        </Link>
       </section>
 
       <section className="flex flex-col gap-4">
@@ -74,31 +81,7 @@ export default async function PlayerTradesPage({ params }: PageProps<"/trades/[p
 
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">History</h2>
-        {transactions.length === 0 ? (
-          <p className="text-foreground/60">Nothing entered yet.</p>
-        ) : (
-          <ul className="divide-y divide-foreground/10 rounded-2xl border border-foreground/15">
-            {transactions.map((t) => (
-              <li key={t.id}>
-                <Link
-                  href={`/trades/${player.id}/${t.id}`}
-                  className="flex flex-col gap-1 px-4 py-3 hover:bg-foreground/5"
-                >
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-semibold">{TYPE_LABELS[t.type]}</span>
-                    {t.symbol && <span className="font-mono">{t.symbol}</span>}
-                    {t.shares && <span className="text-foreground/60">× {t.shares}</span>}
-                    <span className="ml-auto tabular-nums">{signedAmount(t.type, t.amountCents)}</span>
-                  </span>
-                  <span className="flex gap-2 text-xs text-foreground/50">
-                    <span>{t.date}</span>
-                    {t.note && <span className="min-w-0 flex-1 truncate">· {t.note}</span>}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <TransactionHistory playerId={player.id} transactions={transactions} />
       </section>
     </Page>
   );

@@ -4,16 +4,21 @@ import { notFound } from "next/navigation";
 import { ValueChart } from "@/app/chart/value-chart";
 import { AWARDS, Change, tone } from "@/app/_components/score";
 import { Page } from "@/app/_components/ui";
-import { signedAmount, TYPE_LABELS } from "@/app/trades/format";
+import { TransactionHistory } from "@/app/trades/history";
 import { parseId } from "@/lib/db/errors";
 import { getDb } from "@/lib/db/postgres";
 import { formatDay, priceNote } from "@/lib/leaderboard";
 import { STARTING_CASH_CENTS } from "@/lib/ledger";
 import { formatEuroCents, formatSignedEuroCents, formatSignedPercent } from "@/lib/money";
+import { getPlayer } from "@/lib/players";
 import { formatPlace, portfolio, type HoldingRow, type Portfolio } from "@/lib/portfolio";
 import { GAME_START_DATE } from "@/lib/valuation";
 
-export const metadata: Metadata = { title: "Player · Stock League" };
+export async function generateMetadata({ params }: PageProps<"/portfolio/[id]">): Promise<Metadata> {
+  const id = parseId((await params).id);
+  const player = id === null ? null : await getPlayer(getDb(), id);
+  return { title: `${player?.name ?? "Not found"} · Stock League` };
+}
 
 const percent = new Intl.NumberFormat("en-IE", { style: "percent", maximumFractionDigits: 0 });
 
@@ -44,7 +49,7 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
 
       <dl className="grid grid-cols-2 gap-3">
         <Stat label="Cash" value={formatEuroCents(row.cashCents)} />
-        <Stat label="Invested" value={formatEuroCents(row.holdingsValueCents)} />
+        <Stat label="In holdings" value={formatEuroCents(row.holdingsValueCents)} />
         <Stat label="Fees paid" value={formatEuroCents(row.feesCents)} />
         <Stat label="Dividends" value={formatEuroCents(row.dividendsCents)} />
         <Stat
@@ -115,31 +120,7 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
             ✍️ Enter trades
           </Link>
         </div>
-        {p.transactions.length === 0 ? (
-          <p className="text-foreground/60">Nothing entered yet.</p>
-        ) : (
-          <ul className="divide-y divide-foreground/10 rounded-2xl border border-foreground/15">
-            {p.transactions.map((t) => (
-              <li key={t.id}>
-                <Link
-                  href={`/trades/${row.player.id}/${t.id}`}
-                  className="flex flex-col gap-1 px-4 py-3 hover:bg-foreground/5"
-                >
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-semibold">{TYPE_LABELS[t.type]}</span>
-                    {t.symbol && <span className="font-mono">{t.symbol}</span>}
-                    {t.shares && <span className="text-foreground/60">× {t.shares}</span>}
-                    <span className="ml-auto tabular-nums">{signedAmount(t.type, t.amountCents)}</span>
-                  </span>
-                  <span className="flex gap-2 text-xs text-foreground/50">
-                    <span>{formatDay(t.date)}</span>
-                    {t.note && <span className="min-w-0 flex-1 truncate">· {t.note}</span>}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <TransactionHistory playerId={row.player.id} transactions={p.transactions} />
       </section>
     </Page>
   );

@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (pending PRs 24–27 and the player page integrated on one branch; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -148,6 +148,19 @@ session; update at the end of every change. Last updated: 2026-10-05 (pending PR
   hand-calculated seed numbers on PGlite. Checked on 2026-10-05 with
   Playwright at 375 px (light and dark, no horizontal scroll) against a
   local Postgres: the seed, and a one-day database (n/a states).
+- **Review pass on the integrated site (2026-10-05):** after merging the
+  leaderboard, chart, player page, fun stats and backup branches together,
+  every page was checked with Playwright at 375 px and 1280 px, light and
+  dark, against a local Postgres with 7 players over 34 synthetic days
+  (stale prices, a London listing, a long name, a late joiner), the dev seed
+  and a pre-game database. Fixed: page titles for `/stats`, player pages
+  and trade pages (now the player's name); a styled 404 page with a way
+  home; trade history on `/trades/<id>` shows days like the player page
+  ("Sat 21 Nov") and both pages share one list component; leaderboard rows
+  show a › so it's clear they open the player page; the stats section is
+  "Movers on <day>" instead of "Today" (the day is often yesterday); the
+  trade page links to the player's page; the player page's "Invested"
+  card is now "In holdings" (it's the market value, not what was paid).
 - **Daily backup done (ticket 019, ADR 017):** `.github/workflows/daily-backup.yml`
   dumps production at 03:17 UTC, restores the dump into a throwaway
   Postgres 17 in the same run to prove it works, and keeps it as an
@@ -241,5 +254,10 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 - The dev seed's trades are dated November 2026, so until then editing
   them in dev is refused ("can't be in the future"). Add new trades with
   today's date to try the edit page.
+- **Chart colours with 6–7 players:** the palette (ADR 018) passes the
+  colour checks for neighbouring slots, but not every pair is far apart
+  (pink/orange, and green/aqua are the closest). The emoji at each line's
+  end and the list above the chart carry identity, so this is accepted.
+  If players mix lines up, add tap-to-highlight on the legend.
 - The password gate's only brute-force protection is a 1 s delay per wrong
   attempt (ADR 006). Use a password that isn't trivially guessable.
