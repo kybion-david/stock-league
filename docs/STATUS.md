@@ -35,7 +35,7 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 010
   wraps Yahoo (closes, symbol lookup and search) and Frankfurter/ECB (FX to
   EUR), with retries and typed errors. Unit-tested with mocks; the live test
   (`npm run test:live`) passes locally and on a GitHub Actions runner
-  (RUNNER_RESULT). Nothing calls it yet: 011 stores snapshots with it, and
+  (run 37343774152 on 2026-10-05, all 9 live tests passed). Nothing calls it yet: 011 stores snapshots with it, and
   008 can use `lookupSymbol` to check symbols. The PoC script is deleted.
 
 ## Deadline
