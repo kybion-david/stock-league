@@ -28,7 +28,8 @@ anything clever.
 - **Typecheck:** `next typegen && tsc --noEmit`. `next-env.d.ts` and route
   types are generated and gitignored, so they have to be created before `tsc`
   runs on a clean CI checkout.
-- **Vitest** for unit tests. It needs no config for TypeScript/ESM and is
+- **Vitest** for unit tests. Its only config (`vitest.config.ts`) maps the
+  `@/` alias, because Vitest doesn't read tsconfig `paths`. It is
   fast. No component or end-to-end testing for now; add Playwright if the UI
   ever needs it.
 - **CI:** one `ci` workflow on PRs and pushes to `main`: `npm ci`, lint,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatEuroCents } from "./money";
+import { formatEuroCents } from "@/lib/money";
 
 describe("formatEuroCents", () => {
   it("formats cents as euros with thousands separators", () => {
