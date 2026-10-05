@@ -97,7 +97,9 @@ from it, never stored as the source of truth. Postgres tables, created by
     map DB integer ids with `String()`.
 - **`price_snapshots`:** `instrument_id`, `date`, `close` (decimal, in the
   instrument's currency), `currency`, `fetched_at`. One row per instrument
-  and day.
+  and day. The market-data client returns closes in **major units** with an
+  ISO code (a `GBp` listing's close comes back in `GBP`), so store its
+  `currency`, not the instrument's, and look FX up by it.
 - **`fx_snapshots`:** `date`, `currency`, `units_per_eur`, `fetched_at`. One
   row per currency and day. The rate is the ECB quote with base EUR
   (1 EUR = `units_per_eur` USD), so EUR value = amount / `units_per_eur`.
@@ -141,7 +143,11 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Charts:** to be chosen in ticket 015.
 - **Market data (ADR 003):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
-  FX to EUR. Both are keyless and free.
+  FX to EUR. Both are keyless and free. Code depends only on the
+  `MarketDataClient` interface in `src/lib/market-data.ts`
+  (`createMarketDataClient()`): `getClose`, `getFxToEur`, `lookupSymbol`,
+  `searchSymbols`. It retries 429/5xx/timeouts with backoff and throws typed
+  errors (`UnknownSymbolError`, `NoDataError`, `RateLimitError`, …).
 
 ## Structure
 
@@ -152,17 +158,17 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
   `route.ts` files). Keep these thin; put logic in `src/lib/`.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
-  money formatting (`money.ts`) and ledger replay/validation (`ledger.ts`).
-  Later: valuation and market-data clients.
+  money formatting (`money.ts`), ledger replay/validation (`ledger.ts`) and
+  the market-data client (`market-data.ts`). Later: valuation.
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner and the dev seed.
 - `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
   one that has been merged; add a new file instead.
 - `scripts/`: standalone Node scripts. `db.mts` is the database CLI.
-  `poc-market-data.mjs` is the ADR 003 proof of concept and can be deleted
-  once ticket 010 exists.
-- `.github/workflows/`: `ci.yml` (checks) and `docs-check.yml`.
+- `.github/workflows/`: `ci.yml` (checks), `docs-check.yml`, and
+  `market-data-live.yml` (live market-data test on a runner; runs on demand
+  and on PRs that touch `src/lib/market-data*.ts`).
 
 ## Commands
 
@@ -178,8 +184,9 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   the environment or `.env`). Safe to re-run.
 - `npm run db:seed`: insert fake dev players, trades and snapshots. Refuses
   if any players exist, so it can't touch real data.
-- `node scripts/poc-market-data.mjs [YYYY-MM-DD]`: market-data PoC (no
-  install). Prints AAPL, SAP.DE and EUR/USD for that date.
+- `npm run test:live`: live calls to Yahoo and Frankfurter
+  (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
+  tests never touch the network.
 
 Deploy commands come with ticket 006.
 
