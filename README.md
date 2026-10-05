@@ -25,9 +25,14 @@ Needs Node 22 (`nvm use`).
 
 ```sh
 npm install
-npm run dev     # http://localhost:3000
+cp .env.example .env   # set DATABASE_URL to a dev database (e.g. a Neon branch)
+npm run db:migrate
+npm run db:seed        # optional fake players and trades
+npm run dev            # http://localhost:3000
 ```
+
+Tests don't need a database: they use an in-memory Postgres (PGlite).
 
 Checks: `npm run lint`, `npm run typecheck`, `npm test`. The full command list
 is in [`docs/SPEC.md`](docs/SPEC.md) → Commands. The app is only a placeholder
-page so far; see [`docs/STATUS.md`](docs/STATUS.md).
+page so far (the database schema exists, but no page uses it yet); see [`docs/STATUS.md`](docs/STATUS.md).

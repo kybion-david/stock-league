@@ -31,3 +31,4 @@ What gets easier, what gets harder, what we gave up.
 | 003 | [Market data: Yahoo Finance + ECB/Frankfurter](003-market-data-source.md) | Accepted |
 | 004 | [Hosting on Azure SWA Free, database on Neon Free](004-hosting-and-database.md) | Accepted |
 | 005 | [App tooling: Node 22, Tailwind, ESLint, Vitest](005-app-tooling.md) | Accepted |
+| 008 | [Database access: postgres.js, SQL migrations, PGlite tests](008-database-access-and-migrations.md) | Accepted |
