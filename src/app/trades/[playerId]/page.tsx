@@ -30,6 +30,7 @@ export default async function PlayerTradesPage({ params }: PageProps<"/trades/[p
     listPlayers(db),
   ]);
   const { cashCents, holdings } = position(transactions);
+  const today = berlinToday();
   const names = new Map(instruments.map((i) => [i.symbol, i.name]));
 
   return (
@@ -63,8 +64,9 @@ export default async function PlayerTradesPage({ params }: PageProps<"/trades/[p
         <h2 className="text-xl font-semibold">Add a transaction</h2>
         <TransactionForm
           action={addTransactionAction.bind(null, player.id)}
+          today={today}
           defaults={{
-            date: berlinToday(),
+            date: today,
             type: "buy",
             instrumentId: "",
             shares: "",
