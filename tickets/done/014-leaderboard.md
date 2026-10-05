@@ -11,8 +11,8 @@ Make it fun: medals, emojis, colours for up and down.
 
 ## Acceptance criteria
 
-- [ ] Ranked leaderboard with value, total return, day change
-- [ ] "Last updated" date shown
-- [ ] Looks good on day 1 (no history) and after many days
-- [ ] Phone-first layout
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Ranked leaderboard with value, total return, day change
+- [x] "Last updated" date shown
+- [x] Looks good on day 1 (no history) and after many days
+- [x] Phone-first layout
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

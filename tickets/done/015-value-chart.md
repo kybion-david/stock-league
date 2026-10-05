@@ -11,8 +11,8 @@ line per player, with a €1,000 baseline. Pick a lightweight chart library
 
 ## Acceptance criteria
 
-- [ ] One line per player, with a legend that tells players apart
-- [ ] €1,000 reference line
-- [ ] Readable on a phone; works with 1 data point
-- [ ] ADR for the chart library
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] One line per player, with a legend that tells players apart
+- [x] €1,000 reference line
+- [x] Readable on a phone; works with 1 data point
+- [x] ADR for the chart library
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
