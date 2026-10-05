@@ -93,19 +93,28 @@ to you too, there's just no hook to stop you.
 - [ ] Every doc affected by the change is updated (table below) **in the same PR**.
 - [ ] Ticket moved from `tickets/backlog/` to `tickets/done/` if its acceptance criteria are met.
 - [ ] PR opened to `main` with the template's docs checklist filled in.
-- [ ] Worktree removed (see below).
+- [ ] PR merged once its CI checks pass (see below).
+- [ ] Worktree and local branch removed (see below).
 
-**Remove the worktree** once everything is committed, pushed and the PR is
-open. Run it from the main checkout, not from inside the worktree:
+**Merge it yourself.** This is a hobby project and the owner doesn't review
+PRs, so as soon as the work is done you merge the PR without asking. Wait for
+the checks to go green (`gh pr checks <n> --watch`), then run
+`gh pr merge <n> --merge`. If a check fails, fix it and push again; never
+merge red or bypass the checks. This rule applies to this repo only.
+
+**Clean up** after the merge. Run this from the main checkout, not from inside
+the worktree:
 
 ```sh
 git worktree remove ../stock-league-<slug>
+git pull --ff-only origin main
+git branch -d <type>/<slug>
+git worktree prune
 ```
 
-Never add `--force`: if git refuses because of uncommitted changes, commit or
-deal with them first. The branch stays on GitHub; re-create the worktree from
-it if the PR needs more work. After the PR is merged, `git branch -d
-<type>/<slug>` and `git worktree prune` clean up the rest.
+Never add `--force` (or `-D`): if git refuses because of uncommitted changes,
+commit or deal with them first. If a merged PR needs more work, start a new
+branch from `main`.
 
 | If you changed… | …then update |
 |---|---|

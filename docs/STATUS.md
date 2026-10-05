@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 003 done: Next.js app scaffolded with lint/typecheck/test CI, ADR 005).
+session; update at the end of every change. Last updated: 2026-10-05 (agents now merge their own PRs once CI is green; ticket 003 done: Next.js app scaffolded, ADR 005).
 
 ## Current state
 
@@ -12,9 +12,10 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 003
   `formatEuroCents` (`src/lib/money.ts`) and its test. The `ci` workflow runs lint,
   typecheck, test and build on every PR. Nothing is deployed and there's no
   database or password gate yet.
-- Agents work in one git worktree per task, removed when the PR is open
-  (`AGENTS.md` → Session workflow). A Claude Code hook blocks edits in the
-  main checkout.
+- Agents work in one git worktree per task. They merge their own PR once CI
+  is green, then remove the worktree (`AGENTS.md` → Session workflow; the
+  owner decided on 2026-10-05 not to review PRs). A Claude Code hook blocks
+  edits in the main checkout.
 - Game rules are confirmed by the owner (see SPEC). Only the end date and prizes are open.
 - Hosting and database are chosen (ADR 004, owner-confirmed): Next.js on
   Azure Static Web Apps Free, with Neon Free Postgres and the daily job in
