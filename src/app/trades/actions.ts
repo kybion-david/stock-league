@@ -4,6 +4,9 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { formValues, inputErrorState, type FormState } from "@/app/_components/form-state";
 import { getDb } from "@/lib/db/postgres";
+import { formatDay } from "@/lib/leaderboard";
+import { setManualValue } from "@/lib/manual";
+import { formatEuroCents } from "@/lib/money";
 import {
   createTransaction,
   deleteTransaction,
@@ -38,6 +41,27 @@ export async function addTransactionAction(
     return {
       notice: `Added the ${added.type}${added.symbol ? ` of ${added.symbol}` : ""}.`,
       values: { ...values, instrumentId: "", shares: "", amount: "", note: "" },
+    };
+  } catch (err) {
+    return inputErrorState(err, values);
+  }
+}
+
+export async function setManualValueAction(
+  playerId: number,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const values = formValues(formData, ["instrumentId", "date", "worth"]);
+  try {
+    const saved = await setManualValue(getDb(), playerId, {
+      instrumentId: values.instrumentId,
+      date: values.date,
+      worth: values.worth,
+    });
+    refresh();
+    return {
+      notice: `Saved: ${saved.symbol} worth ${formatEuroCents(saved.worthCents)} on ${formatDay(saved.date)}.`,
     };
   } catch (err) {
     return inputErrorState(err, values);

@@ -105,6 +105,11 @@ export function realizedTotal(
 
 /** One holding's price note, like the leaderboard's but for a single line. */
 export function holdingNote(h: HoldingValuation): string | null {
+  if (h.manual) {
+    return h.priceDate
+      ? `Value typed in by hand, last on ${formatDay(h.priceDate)}.`
+      : "No value typed in yet, so it counts at cost.";
+  }
   if (h.priceStatus === "missing") return "No price yet, so it counts at cost.";
   if (h.priceStatus === "current") return null;
   const days = [h.priceDate, h.fxDate].filter((d): d is string => d !== null);

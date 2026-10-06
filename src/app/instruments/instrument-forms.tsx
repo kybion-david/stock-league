@@ -36,6 +36,22 @@ export function AddInstrumentForm({ action }: { action: Action }) {
   );
 }
 
+/** A manual instrument (ADR 022) only needs a name, which is also its symbol. */
+export function AddManualInstrumentForm({ action }: { action: Action }) {
+  const [state, formAction] = useActionState(action, {});
+  const name = state.values?.name ?? "";
+
+  return (
+    <form action={formAction} className="flex flex-col gap-4" key={name}>
+      <Field label="Short name" hint="Shown in holdings, e.g. NVDA calls Dec. Can't be changed later.">
+        <input name="name" defaultValue={name} required maxLength={32} autoComplete="off" className={inputClass} />
+      </Field>
+      <FormMessage error={state.error} notice={state.notice} />
+      <SubmitButton pendingLabel="Adding…">Add manual instrument</SubmitButton>
+    </form>
+  );
+}
+
 export function EditInstrumentForm({
   action,
   instrument,
@@ -58,6 +74,17 @@ export function EditInstrumentForm({
       <Field label="Name">
         <input name="name" defaultValue={values.name} required maxLength={100} className={inputClass} />
       </Field>
+      {instrument.type !== "manual" && <MarketFields values={values} />}
+      <FormMessage error={state.error} notice={state.notice} />
+      <SubmitButton pendingLabel="Saving…">Save</SubmitButton>
+    </form>
+  );
+}
+
+/** Type, currency and exchange: only instruments with a market price have them. */
+function MarketFields({ values }: { values: Record<string, string> }) {
+  return (
+    <>
       <div className="flex gap-3">
         <div className="flex-1">
           <Field label="Type">
@@ -85,8 +112,6 @@ export function EditInstrumentForm({
       <Field label="Exchange" hint="Optional.">
         <input name="exchange" defaultValue={values.exchange} maxLength={100} className={inputClass} />
       </Field>
-      <FormMessage error={state.error} notice={state.notice} />
-      <SubmitButton pendingLabel="Saving…">Save</SubmitButton>
-    </form>
+    </>
   );
 }

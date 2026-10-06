@@ -159,7 +159,7 @@ interface Instrument {
   symbol: string;
 }
 
-/** Instruments any player holds shares of at the end of `date`. */
+/** Instruments with a market price that any player holds shares of at the end of `date`. */
 async function heldInstruments(db: Db, date: string): Promise<Instrument[]> {
   const rows = await db.query<{
     id: number;
@@ -194,7 +194,10 @@ async function heldInstruments(db: Db, date: string): Promise<Instrument[]> {
     }
   }
   if (held.size === 0) return [];
-  const all = await db.query<Instrument>("select id, symbol from instruments order by symbol");
+  // Manual instruments (ADR 022) have no market price: players type their value in.
+  const all = await db.query<Instrument>(
+    "select id, symbol from instruments where type <> 'manual' order by symbol",
+  );
   return all.filter((i) => held.has(i.id));
 }
 
@@ -208,6 +211,8 @@ async function ingestPrice(
   try {
     try {
       const close = await client.getClose(symbol, date);
+      // The table allows 0 for manual values (ADR 022); a fetched close never is.
+      if (!(Number(close.close) > 0)) throw new Error(`Close of ${close.close} for ${symbol}`);
       await upsertPrice(db, instrument.id, date, close.close, close.currency);
       return { symbol, status: "fetched", close: close.close, currency: close.currency };
     } catch (err) {

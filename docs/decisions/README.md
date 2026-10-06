@@ -47,3 +47,4 @@ What gets easier, what gets harder, what we gave up.
 | 019 | [Fun stats: own page, € not %, records from day 2](019-fun-stats.md) | Accepted |
 | 020 | [Emoji picker: a fixed grid of our own, no library](020-emoji-picker.md) | Accepted |
 | 021 | [Demo season: in-memory fake game behind a build switch](021-demo-season.md) | Accepted (temporary) |
+| 022 | [Manual instruments: a hand-typed price in the normal snapshot table](022-manual-instruments.md) | Accepted |
