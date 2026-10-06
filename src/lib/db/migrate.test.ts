@@ -27,7 +27,7 @@ async function tableNames(): Promise<string[]> {
 describe("migrate", () => {
   it("creates all tables from scratch", async () => {
     const ran = await migrate(db);
-    expect(ran).toEqual(["001_initial_schema.sql"]);
+    expect(ran).toEqual(["001_initial_schema.sql", "002_manual_instruments.sql"]);
     expect(await tableNames()).toEqual([
       "fx_snapshots",
       "instruments",

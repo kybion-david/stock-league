@@ -3,12 +3,12 @@ import Link from "next/link";
 import { Page } from "@/app/_components/ui";
 import { getDb } from "@/lib/db/postgres";
 import { listInstruments } from "@/lib/instruments";
-import { addInstrumentAction } from "./actions";
-import { AddInstrumentForm } from "./instrument-forms";
+import { addInstrumentAction, addManualInstrumentAction } from "./actions";
+import { AddInstrumentForm, AddManualInstrumentForm } from "./instrument-forms";
 
 export const metadata: Metadata = { title: "Instruments · Stock League" };
 
-const TYPE_LABELS = { stock: "Stock", etf: "ETF", crypto: "Crypto" } as const;
+const TYPE_LABELS = { stock: "Stock", etf: "ETF", crypto: "Crypto", manual: "Manual" } as const;
 
 export default async function InstrumentsPage() {
   const instruments = await listInstruments(getDb());
@@ -45,6 +45,15 @@ export default async function InstrumentsPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Add an instrument</h2>
         <AddInstrumentForm action={addInstrumentAction} />
+      </section>
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">Something else</h2>
+        <p className="text-sm text-foreground/70">
+          For anything Yahoo can&apos;t price, like an options trade. Buy it like any other
+          instrument (1 share for what you put in), then type in what it&apos;s worth on your
+          trades page whenever it changes. Nobody else will update it for you.
+        </p>
+        <AddManualInstrumentForm action={addManualInstrumentAction} />
       </section>
     </Page>
   );

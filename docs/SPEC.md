@@ -21,8 +21,9 @@ Confirmed with the project owner (2026-10-05):
   and penalties for the worst will be defined later; the app doesn't need
   them yet.
 - **Allowed investments:** anything players can buy on typical exchanges. The
-  app must support **stocks, ETFs and crypto**. Exotic instruments are out of
-  scope until someone needs them.
+  app must support **stocks, ETFs and crypto**. Anything it can't price
+  (an options trade, say) can be added as a **manual instrument** whose
+  value the player keeps up to date by hand (ADR 022).
 - **Trading:** players can buy, sell and rebalance **at any time** during the
   game. Every trade is recorded in the app (see *Data model*).
 - **Fees:** entered **manually** by players, as their own amount. They reduce
@@ -112,6 +113,15 @@ Confirmed with the project owner (2026-10-05):
    exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
    names and symbols are rejected, whatever their case ("dave" next to
    "Dave"). Nothing can be deleted.
+   **Manual instruments (ADR 022, `src/lib/manual.ts`):** "Something else"
+   on `/instruments` adds one by a short name (≤ 32 characters, also its
+   symbol), with no Yahoo check, in EUR. Players buy and sell it with the
+   normal trade form (1 share for what they put in), and on
+   `/trades/<player>` each manual holding has a "Worth now" form: the total
+   the holding is worth on a day (today or earlier, €0 allowed). Re-entering
+   a day overwrites it. Its last value counts as current, however old (no ⏳
+   note; ✍️ on the player page says when it was typed in); before the
+   first value it counts at cost. The daily job never fetches it.
 
 7. **Demo season (temporary, ADR 021):** while it's switched on, the site
    shows a made-up game instead of the real one: seven fake players with
@@ -133,9 +143,9 @@ from it, never stored as the source of truth. Postgres tables, created by
 - **`players`:** `id`, `name` (unique, non-blank), `emoji` (optional),
   `created_at`.
 - **`instruments`:** `id`, `symbol` (unique; the Yahoo symbol), `name`,
-  `type` (`stock | etf | crypto`), `currency` (as Yahoo reports it: usually
-  ISO 4217, but London listings report `GBp`, pence), `exchange` (optional),
-  `created_at`.
+  `type` (`stock | etf | crypto | manual`), `currency` (as Yahoo reports it: usually
+  ISO 4217, but London listings report `GBp`, pence; always `EUR` for
+  `manual`), `exchange` (optional), `created_at`.
 - **`transactions`:** `id`, `player_id`, `date` (game day), `type`
   (`buy | sell | fee | dividend`), `instrument_id`, `shares`, `amount_cents`,
   `note`, `created_at` / `created_by`, `updated_at` / `updated_by` (free-text
@@ -162,13 +172,16 @@ from it, never stored as the source of truth. Postgres tables, created by
   instrument's currency), `currency`, `fetched_at`. One row per instrument
   and day. The market-data client returns closes in **major units** with an
   ISO code (a `GBp` listing's close comes back in `GBP`; ADR 010), so store its
-  `currency`, not the instrument's, and look FX up by it.
+  `currency`, not the instrument's, and look FX up by it. A `manual`
+  instrument's rows are typed in by players: the per-unit value in EUR
+  (the holding's total worth / shares held that day), and may be 0. They
+  never count for "latest day with prices" (ADR 022).
 - **`fx_snapshots`:** `date`, `currency`, `units_per_eur`, `fetched_at`. One
   row per currency and day. The rate is the ECB quote with base EUR
   (1 EUR = `units_per_eur` USD), so EUR value = amount / `units_per_eur`.
   EUR has no rows.
 - **How snapshots are filled (ADR 012, `src/lib/ingest.ts`):** every
-  calendar day gets a price row for each instrument someone holds (net
+  calendar day gets a price row for each non-manual instrument someone holds (net
   shares > 0 at the end of the day) and an FX row for each non-EUR currency
   those prices are in. Weekends and holidays carry the last close forward
   (and the ECB's last published rate), so a missing row means a failed
@@ -256,7 +269,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   pages, their server actions (`actions.ts`) and client forms. The player
   form's emoji field is `players/emoji-picker.tsx` (ADR 020).
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
-  `[playerId]/` shows their position, history and add form,
+  `[playerId]/` shows their position (with a "Worth now" form,
+  `manual-value-form.tsx`, under each manual holding), history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
   `transaction-forms.tsx`, `format.ts` (signed amounts) and `history.tsx`
   (the transaction list, also used by the player page) sit alongside.
@@ -272,7 +286,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
-  access (`players.ts`, `instruments.ts`), the emoji picker's list
+  access (`players.ts`, `instruments.ts`), manual instruments' typed-in
+  values (`manual.ts`), the emoji picker's list
   (`emoji.ts`), transaction entry
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation

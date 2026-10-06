@@ -71,6 +71,15 @@ describe("holdingNote", () => {
     const h = holding("AAPL", 1, { priceStatus: "missing", priceDate: null });
     expect(holdingNote(h)).toBe("No price yet, so it counts at cost.");
   });
+
+  it("says when a manual value was last typed in, or that there is none", () => {
+    expect(holdingNote(holding("Calls", 1, { manual: true, priceDate: "2026-11-03" }))).toBe(
+      "Value typed in by hand, last on Tue 3 Nov.",
+    );
+    expect(holdingNote(holding("Calls", 1, { manual: true, priceDate: null }))).toBe(
+      "No value typed in yet, so it counts at cost.",
+    );
+  });
 });
 
 describe("realizedTotal", () => {

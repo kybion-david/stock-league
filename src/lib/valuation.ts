@@ -35,6 +35,8 @@ export interface FxRow {
 export interface PriceBook {
   close(instrument: string, date: string): PriceRow | null;
   fx(currency: string, date: string): FxRow | null;
+  /** True for a manual instrument (ADR 022), whose value players type in. */
+  isManual?(instrument: string): boolean;
 }
 
 /**
@@ -63,6 +65,11 @@ export interface HoldingValuation {
   priceDate: string | null;
   /** Day of the FX rate used; null for EUR or when `missing`. */
   fxDate: string | null;
+  /**
+   * Set for a manual instrument (ADR 022). Its last entered value counts as
+   * `current` however old it is, and before the first one it counts at cost.
+   */
+  manual?: true;
 }
 
 /** An instrument the player has fully sold, with what it made or lost. */
@@ -105,13 +112,19 @@ export interface SeriesPoint extends DayChange {
   stale: boolean;
 }
 
-/** Builds a `PriceBook` from snapshot rows (any order). */
-export function createPriceBook(prices: readonly PriceRow[], fx: readonly FxRow[]): PriceBook {
+/** Builds a `PriceBook` from snapshot rows (any order) and the manual instruments' keys. */
+export function createPriceBook(
+  prices: readonly PriceRow[],
+  fx: readonly FxRow[],
+  manual: Iterable<string> = [],
+): PriceBook {
   const closes = groupByDate(prices, (p) => p.instrument);
   const rates = groupByDate(fx, (r) => r.currency);
+  const manualSet = new Set(manual);
   return {
     close: (instrument, date) => lastOnOrBefore(closes.get(instrument), date),
     fx: (currency, date) => lastOnOrBefore(rates.get(currency), date),
+    isManual: (instrument) => manualSet.has(instrument),
   };
 }
 
@@ -243,7 +256,14 @@ function valueHolding(
   book: PriceBook,
 ): HoldingValuation {
   const costCents = cost?.costCents ?? 0;
-  const base = { instrument, shares, costCents, realizedCents: cost?.realizedCents ?? 0 };
+  const manual = book.isManual?.(instrument) ?? false;
+  const base = {
+    instrument,
+    shares,
+    costCents,
+    realizedCents: cost?.realizedCents ?? 0,
+    ...(manual && { manual: true as const }),
+  };
   const price = book.close(instrument, date);
   const rate = price && price.currency !== "EUR" ? book.fx(price.currency, date) : null;
 
@@ -253,14 +273,14 @@ function valueHolding(
       valueCents: costCents,
       gainCents: 0,
       gainRate: 0,
-      priceStatus: "missing",
+      priceStatus: manual ? "current" : "missing",
       priceDate: null,
       fxDate: null,
     };
   }
   const valueCents = eurCents(shares, price.close, rate?.unitsPerEur);
   const gainCents = valueCents - costCents;
-  const current = price.date === date && (!rate || rate.date === date);
+  const current = manual || (price.date === date && (!rate || rate.date === date));
   return {
     ...base,
     valueCents,
@@ -410,7 +430,10 @@ export async function loadGame(db: Db, to: string): Promise<GameData> {
     `select date, currency, units_per_eur as "unitsPerEur" from fx_snapshots where date <= $1`,
     [to],
   );
-  return { players, ledgers, book: createPriceBook(prices, fx) };
+  const manual = await db.query<{ symbol: string }>(
+    "select symbol from instruments where type = 'manual'",
+  );
+  return { players, ledgers, book: createPriceBook(prices, fx, manual.map((m) => m.symbol)) };
 }
 
 /**
@@ -442,10 +465,15 @@ export async function playerSeries(db: Db, from: string, to: string): Promise<Pl
   }));
 }
 
-/** The latest day with any price snapshot, for "last updated"; null if none. */
+/**
+ * The latest day with any fetched price snapshot, for "last updated"; null
+ * if none. Manual values (ADR 022) don't count: one typed in for today
+ * mustn't move the leaderboard past the last daily run.
+ */
 export async function latestSnapshotDate(db: Db): Promise<string | null> {
   const [row] = await db.query<{ date: string | null }>(
-    "select max(date) as date from price_snapshots",
+    `select max(p.date) as date from price_snapshots p
+     join instruments i on i.id = p.instrument_id where i.type <> 'manual'`,
   );
   return row?.date ?? null;
 }

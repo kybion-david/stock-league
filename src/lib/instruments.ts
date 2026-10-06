@@ -8,13 +8,20 @@ import {
   type MarketDataClient,
 } from "@/lib/market-data";
 
+/** The types with a market price, fetched from Yahoo. */
 export const INSTRUMENT_TYPES: readonly InstrumentType[] = ["stock", "etf", "crypto"];
+
+/**
+ * `manual`: anything Yahoo can't price, such as an options trade (ADR 022).
+ * Players type in what it's worth; its symbol is the name they gave it.
+ */
+export type InstrumentKind = InstrumentType | "manual";
 
 export interface Instrument {
   id: number;
   symbol: string;
   name: string;
-  type: InstrumentType;
+  type: InstrumentKind;
   currency: string;
   exchange: string | null;
 }
@@ -114,6 +121,31 @@ export async function addInstrument(
   }
 }
 
+/**
+ * Adds a manual instrument (ADR 022): no Yahoo check, priced in EUR by
+ * hand. The name doubles as its symbol, so it must be short and unique.
+ */
+export async function addManualInstrument(db: Db, rawName: string): Promise<Instrument> {
+  const name = rawName.trim().replace(/\s+/g, " ");
+  if (!name) throw new InputError("Enter a name.");
+  if (name.length > MAX_SYMBOL_LENGTH) {
+    throw new InputError(`Keep the name to ${MAX_SYMBOL_LENGTH} characters.`);
+  }
+  const existing = await findBySymbol(db, name);
+  if (existing) throw duplicate(existing.symbol);
+  try {
+    const [row] = await db.query<Instrument>(
+      `insert into instruments (symbol, name, type, currency)
+       values ($1, $1, 'manual', 'EUR') returning ${COLUMNS}`,
+      [name],
+    );
+    return row;
+  } catch (err) {
+    if (isUniqueViolation(err)) throw duplicate(name);
+    throw err;
+  }
+}
+
 /** Trims the edit and checks it. Throws `InputError` with a readable message. */
 export function cleanInstrumentEdit(input: InstrumentEdit): {
   name: string;
@@ -136,12 +168,26 @@ export function cleanInstrumentEdit(input: InstrumentEdit): {
   return { name, type, currency, exchange: exchange || null };
 }
 
+/**
+ * Saves an edit. A manual instrument (ADR 022) only takes a new name and
+ * stays manual and in EUR; a priced one can't be turned into a manual one.
+ */
 export async function updateInstrument(
   db: Db,
   id: number,
   input: InstrumentEdit,
 ): Promise<Instrument> {
-  const { name, type, currency, exchange } = cleanInstrumentEdit(input);
+  const existing = await getInstrument(db, id);
+  if (!existing) throw new InputError("That instrument doesn't exist.");
+  const manual = existing.type === "manual";
+  // A manual instrument's form only has the name: it keeps its type, currency and exchange.
+  const { name, type, currency, exchange } = manual
+    ? {
+        ...cleanInstrumentEdit({ ...input, type: "stock", currency: "EUR", exchange: "" }),
+        type: "manual",
+        exchange: existing.exchange,
+      }
+    : cleanInstrumentEdit(input);
   const [row] = await db.query<Instrument>(
     `update instruments set name = $2, type = $3, currency = $4, exchange = $5
      where id = $1 returning ${COLUMNS}`,

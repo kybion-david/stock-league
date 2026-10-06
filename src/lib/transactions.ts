@@ -103,9 +103,9 @@ function toLedger(tx: Transaction): LedgerTransaction {
   };
 }
 
-/** Cash and holdings after all of a player's transactions. */
-export function position(transactions: readonly Transaction[]): Position {
-  const state = replay(transactions.map(toLedger), "9999-12-31");
+/** Cash and holdings after all of a player's transactions, or at the end of `date`. */
+export function position(transactions: readonly Transaction[], date = "9999-12-31"): Position {
+  const state = replay(transactions.map(toLedger), date);
   const holdings = Object.entries(state.holdings)
     .filter(([, shares]) => !shares.startsWith("-"))
     .map(([symbol, shares]) => ({ symbol, shares }))

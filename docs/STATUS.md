@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-06 (demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-06 (ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -56,6 +56,17 @@ session; update at the end of every change. Last updated: 2026-10-06 (demo seaso
   a picked emoji, the picker clearing after an add, outside tap and Escape
   closing it, the current emoji highlighted on the edit page, and clearing
   it. No horizontal scroll, no console errors. Not yet seen on the live site.
+- **Manual instruments done (ticket 020, ADR 022, 2026-10-06):** for
+  things Yahoo can't price, such as an options trade. "Something else" on
+  `/instruments` adds one by name; it's bought and sold with the normal
+  trade form, and each manual holding on `/trades/<player>` has a "Worth
+  now" form that stores a hand-typed EUR price (`src/lib/manual.ts`,
+  unit-tested on PGlite). The daily job skips it, and its values don't move
+  the leaderboard's day. Needs **migration 002**, which isn't applied to
+  Neon yet (see Next up). Checked on 2026-10-06 with Playwright at 375 px
+  against the standalone build in demo mode: add (and a duplicate), buy,
+  enter a value, the trades page, the player page (✍️ note) and the edit
+  page. No horizontal scroll, no console errors. Not seen on the live site.
 - **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
   (Frankfurt), Postgres 18 (the server reports 18.6; earlier docs said
   17). Branch `production` is the real database, and
@@ -247,7 +258,12 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–017 and 019 are done.
+lowest number whose dependencies are done. 001–017, 019 and 020 are done.
+**Apply migration 002 to Neon** (`npm run db:migrate` with the production
+`DATABASE_URL` from the owner's `.env`, then with the `dev` one): it
+allows manual instruments (ADR 022). Nothing applies migrations
+automatically, and until it runs, adding a manual instrument in production
+fails. The demo season runs every migration itself, so it already has it.
 **First, once the owner has seen it: revert the demo season PR** (ADR 021;
 a plain `git revert` of its merge commit, as a PR). Until then, local
 `npm run dev` shows the demo too; use `STOCK_LEAGUE_DEMO=0`.

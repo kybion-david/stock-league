@@ -158,7 +158,11 @@ function Holding({ h }: { h: HoldingRow }) {
           {h.costCents > 0 && ` (${formatSignedPercent(h.gainRate)})`}
         </span>
       </div>
-      {h.note && <p className="text-xs text-foreground/50">⏳ {h.note}</p>}
+      {h.note && (
+        <p className="text-xs text-foreground/50">
+          {h.manual ? "✍️" : "⏳"} {h.note}
+        </p>
+      )}
     </li>
   );
 }
