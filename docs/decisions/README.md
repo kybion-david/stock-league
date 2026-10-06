@@ -45,3 +45,4 @@ What gets easier, what gets harder, what we gave up.
 | 017 | [Daily backup: pg_dump to a workflow artifact, restore-checked every run](017-daily-db-backup.md) | Accepted |
 | 018 | [Value chart: plain SVG, no chart library](018-value-chart-plain-svg.md) | Accepted |
 | 019 | [Fun stats: own page, € not %, records from day 2](019-fun-stats.md) | Accepted |
+| 020 | [Emoji picker: a fixed grid of our own, no library](020-emoji-picker.md) | Accepted |
