@@ -105,8 +105,9 @@ Confirmed with the project owner (2026-10-05):
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
 6. **Players and instruments** (`/players`, `/instruments`): anyone can add
-   or rename players (name, optional emoji) and add instruments. An instrument
-   is added by its Yahoo symbol alone: it's checked with Yahoo, which also
+   or rename players (name, optional emoji) and add instruments. The emoji
+   is picked from a grid of about 160 in the form, or left empty (ADR 020).
+   An instrument is added by its Yahoo symbol alone: it's checked with Yahoo, which also
    supplies name, type, currency and exchange. Name, type, currency and
    exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
    names and symbols are rejected, whatever their case ("dave" next to
@@ -244,7 +245,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `score.tsx` has the green/red gain chip (`Change`, `tone`) and the
   medal emojis (`AWARDS`).
 - `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
-  pages, their server actions (`actions.ts`) and client forms.
+  pages, their server actions (`actions.ts`) and client forms. The player
+  form's emoji field is `players/emoji-picker.tsx` (ADR 020).
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
   `[playerId]/` shows their position, history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
@@ -260,7 +262,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
-  access (`players.ts`, `instruments.ts`), transaction entry
+  access (`players.ts`, `instruments.ts`), the emoji picker's list
+  (`emoji.ts`), transaction entry
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
