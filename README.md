@@ -28,7 +28,7 @@ npm install
 cp .env.example .env   # set SITE_PASSWORD, and DATABASE_URL to a dev database (e.g. a Neon branch)
 npm run db:migrate
 npm run db:seed        # optional fake players and trades
-npm run dev            # http://localhost:3000
+npm run dev            # http://localhost:3000 (demo season while it's on; STOCK_LEAGUE_DEMO=0 for your DATABASE_URL)
 npm run ingest         # optional: fetch today's prices for held instruments
 ```
 

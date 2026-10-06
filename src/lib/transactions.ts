@@ -3,6 +3,7 @@
 // checked with the ledger rules (ADR 007) against the player's whole ledger,
 // inside a database transaction that locks the player's row.
 import type { Db } from "@/lib/db/db";
+import { DEMO, DEMO_TODAY } from "@/lib/demo/config";
 import { InputError, parseId } from "@/lib/db/errors";
 import {
   formatShares,
@@ -68,9 +69,10 @@ const MAX_NOTE_LENGTH = 200;
 // Far above anything in a €1,000 game, and well inside the integer column.
 const MAX_AMOUNT_CENTS = 100_000_000;
 
-/** Today's game day (`YYYY-MM-DD` in Europe/Berlin). */
-export function berlinToday(now = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now);
+/** Today's game day (`YYYY-MM-DD` in Europe/Berlin); the pretend day in demo mode (ADR 021). */
+export function berlinToday(now?: Date): string {
+  if (!now && DEMO) return DEMO_TODAY;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now ?? new Date());
 }
 
 /** A player's transactions, newest first. */
