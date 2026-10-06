@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-05 (ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-05 (season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -39,7 +39,8 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 015
   Production has no players or instruments yet: the owner (or the players)
   add the real ones before 2026-11-01.
 - **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
-  (Frankfurt), Postgres 17. Branch `production` is the real database, and
+  (Frankfurt), Postgres 18 (the server reports 18.6; earlier docs said
+  17). Branch `production` is the real database, and
   `dev` is branched from it for local work and seed data. Migration 001 is
   applied on both, and `dev` is seeded. The production pooled string is in
   the GitHub secret `DATABASE_URL`, and the dev string is in the owner's
@@ -124,8 +125,100 @@ session; update at the end of every change. Last updated: 2026-10-05 (ticket 015
   errors) against local Postgres databases: the dev seed, 7 players over 28
   synthetic days (with a long name, a player without emoji and stale
   prices), a single day, and a pre-game database. Not yet seen on the live
-  site with real data. `ValueChart` takes any number of series, so 016 can
-  reuse it for one player.
+  site with real data. `ValueChart` takes any number of series; the player
+  page (016) reuses it for one.
+- **Player page done (ticket 016):** each leaderboard row links to
+  `/portfolio/<id>`: place, value, total and day change, cash, invested,
+  fees, dividends, gain booked by selling, holdings with per-holding gain
+  and price notes, sold-out positions, the player's own chart and their
+  whole history (rows open the edit pages). Data comes from
+  `src/lib/portfolio.ts` (built on the leaderboard and valuation, so it
+  always matches the home page; unit-tested on PGlite). The leaderboard's
+  gain chip and medals moved to `src/app/_components/score.tsx`. Checked on
+  2026-10-05 with Playwright at 375 px (light and dark, no horizontal
+  scroll, no console errors) against local Postgres: the dev seed plus a
+  full sell (sold-out list), a buy with no price yet, an old price and a
+  long name without emoji, a pre-game database, and an unknown id (404).
+  Not yet seen on the live site.
+- **Fun stats done (ticket 017, ADR 019):** `/stats` (linked from the
+  home page as "Fun stats") shows, for the leaderboard's day, today's top
+  gainer and biggest loser, hottest and coldest pick, best and worst single
+  day (from day 2), best and worst pick of the game and the fee champion.
+  Anything that doesn't apply yet shows "n/a"; before 2026-11-01 the page
+  just says when stats start. Logic in `src/lib/stats.ts`, unit-tested with
+  hand-calculated seed numbers on PGlite. Checked on 2026-10-05 with
+  Playwright at 375 px (light and dark, no horizontal scroll) against a
+  local Postgres: the seed, and a one-day database (n/a states).
+- **Review pass on the integrated site (2026-10-05):** after merging the
+  leaderboard, chart, player page, fun stats and backup branches together,
+  every page was checked with Playwright at 375 px and 1280 px, light and
+  dark, against a local Postgres with 7 players over 34 synthetic days
+  (stale prices, a London listing, a long name, a late joiner), the dev seed
+  and a pre-game database. Fixed: page titles for `/stats`, player pages
+  and trade pages (now the player's name); a styled 404 page with a way
+  home; trade history on `/trades/<id>` shows days like the player page
+  ("Sat 21 Nov") and both pages share one list component; leaderboard rows
+  show a › so it's clear they open the player page; the stats section is
+  "Movers on <day>" instead of "Today" (the day is often yesterday); the
+  trade page links to the player's page; the player page's "Invested"
+  card is now "In holdings" (it's the market value, not what was paid).
+- **User-flow test of the integrated site (2026-10-05, branch `testing`):**
+  every flow was driven with Playwright at 375 px against the production
+  build and local Postgres, with the server clock moved to 2026-11-20, to
+  kick-off day and to the day after: login (wrong password, deep link),
+  players and instruments (add, duplicate, edit, Yahoo unreachable), trades
+  (buy, sell, fee, dividend, overspend, oversell, future date, bad amounts
+  and shares, edit with audit line, cancelled and confirmed delete, refused
+  delete), the leaderboard, player pages (sell-out, buy without a price,
+  ties), the chart (keys, tap, hover) and stats. Fixed: with prices stored
+  before kick-off (an early buy), the home page said "0 days to go" all of
+  2026-11-01 and "−1 days to go" if that night's run was skipped; it now
+  shows the game as started (ADR 016). Dark mode now sets `color-scheme`, so
+  the date picker icon is visible and select menus are dark. Player names
+  are now unique regardless of case. The player page names the price day
+  like the home page. Yahoo was unreachable from the test machine, so only
+  the "couldn't reach Yahoo" path of adding an instrument was tried.
+- **Season simulation with three personas (2026-10-05, branch `testing`):**
+  the production build ran under a faked server clock, with a fake Yahoo
+  and Frankfurter giving deterministic prices (weekends, US/EU/UK
+  holidays, GBp listing, ECB days). Three personas used separate phones
+  from setup on 2026-10-05 to 2027-04-06: Anna (careful ETF saver, comma
+  decimals, separate fees, edits), Ben (crypto, dark mode, 8-decimal
+  shares, cash at −€50, sell-out, delete, rename) and Chloé (US/UK stocks,
+  next-morning and backdated entries, dividends, partial sell). The daily
+  job ran as the workflow does, at 22:30 UTC every night, plus a Yahoo
+  outage and a manual re-run, a run starting at 01:15 UTC, a late joiner,
+  Thanksgiving, Christmas, New Year, Easter and both DST switches. Values
+  were checked against the fake prices by hand (GBp → GBP → EUR included).
+  Fixed:
+  - **The daily job failed every weekend and holiday** (red run, no
+    carried rows, ⏳ notes for everyone). Under `tsx` the CLI loads two
+    copies of `market-data.ts`, so `instanceof NoDataError` missed the
+    client's errors. Unit tests run in one module graph and couldn't see
+    it. Now checked by name too (`isNoDataError`).
+  - **Late-entered buys never got prices** for the days already ingested:
+    they counted at cost there, and their first price landed as one big
+    day change (and could top the best/worst day records). The daily job
+    now fills rows still missing on the 7 days before its date (ADR 012).
+  - **Everyone was logged out in early January**, 90 days after logging
+    in before kick-off. The session now renews itself on visits (ADR 006).
+  - **A trade tab left open overnight kept yesterday's date** and saved
+    the next trade on the wrong day. The add form's date now moves to the
+    new day when the page is shown again, unless the player picked a date.
+  - Adding `^GSPC` said `"^GSPC" is a INDEX, …`; now "is an index on
+    Yahoo, not a stock, ETF or crypto."
+- **Daily backup done (ticket 019, ADR 017):** `.github/workflows/daily-backup.yml`
+  dumps production at 03:17 UTC, restores the dump into a throwaway
+  Postgres 18 in the same run to prove it works, and keeps it as an
+  artifact for 90 days. Restore steps are in `docs/SPEC.md` → Commands. Tested
+  locally on 2026-10-05 against a seeded Postgres 17: the dump, the
+  in-run restore check, a restore into an empty database, an in-place
+  `--clean` restore over a damaged database (migrations and inserts still
+  worked afterwards), and the failure on an empty dump. The first run
+  against production (PR 28, 2026-10-05) failed: Neon runs Postgres 18 and
+  `pg_dump` 17 refuses a newer server, so every tool now uses `postgres:18`.
+  A restore *into Neon* hasn't been tried yet: Neon is plain Postgres 18,
+  so the documented steps should just work.
 
 ## Deadline
 
@@ -136,9 +229,8 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–015 are done.
-Next: 019 (backups, needed before launch), then 018 (launch readiness).
-After launch: 016 (reuse `ValueChart` from `/chart` for one player), 017. In the first days after 2026-11-01, check the
+lowest number whose dependencies are done. 001–017 and 019 are done.
+Next: 018 (launch readiness). In the first days after 2026-11-01, check the
 `daily-ingest` runs in the Actions tab: ingestion only fetches instruments
 that someone holds, so those are the first runs that really fetch prices.
 
@@ -157,15 +249,21 @@ that someone holds, so those are the first runs that really fetch prices.
 
 **Milestone A: must be live by 2026-11-01** (trades can be entered, prices
 are captured daily from day one):
-004, 006, 007, 008, 009, 010, 011, 012, 013, 014, 019, 018. Open: 019, 018.
+004, 006, 007, 008, 009, 010, 011, 012, 013, 014, 019, 018. Open: 018.
 
 **Milestone B: shortly after launch** (history accumulates meanwhile):
-015, 016, 017. Open: 016, 017.
+015, 016, 017. All done.
 
 ## Open questions (ask the project owner, don't guess)
 
 1. **End date** of the game. Not blocking: the app runs open-ended until it's set.
 2. **Prizes/penalties:** to be defined later. Not needed for the MVP.
+3. **Trades dated before 2026-11-01:** the app accepts them, so an early
+   buy's gain or loss before kick-off counts (it shows on the pre-game
+   line-up and in "best/worst pick"). 2026-11-01 is a Sunday, so stock and
+   ETF buyers can only buy on Fri 30 Oct or Mon 2 Nov. Should trades before
+   kick-off be refused, or the early days be ignored? Found in the season
+   simulation; not changed.
 
 Answered on 2026-10-05 (now in `docs/SPEC.md` → Game rules, and ADR 002):
 start date, winner rule, entry method, allowed instruments, currency,
@@ -181,8 +279,9 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   works (2026-10-05), but SWA's edge caches prerendered pages past the
   proxy, so every page must stay dynamic (ADR 006). If SWA causes more
   trouble, switch to Vercel Hobby with a new ADR.
-- Neon Free keeps only 6 hours of point-in-time restore. Daily backups are
-  needed before launch (ticket 019).
+- Neon Free keeps only 6 hours of point-in-time restore. The daily backup
+  (ADR 017) covers older losses, but anything entered since the last
+  03:17 UTC backup is lost on a full restore and has to be re-entered.
 - **Yahoo's endpoint is unofficial** (ADR 003). It may change, rate-limit, or
   block GitHub Actions IPs. It worked from a runner on 2026-10-05
   (`market-data-live` workflow), but that's no guarantee. If the daily job
@@ -204,10 +303,15 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   dependencies (via `eslint-config-next`). They're accepted until upstream
   fixes them (ADR 005).
 - **Deleted transactions leave no trace** (ADR 013): who deleted what
-  isn't recorded. Recovery is re-entering it or a backup (ticket 019). Add a
+  isn't recorded. Recovery is re-entering it or a backup (ADR 017). Add a
   change-log table if a dispute ever needs it.
 - The dev seed's trades are dated November 2026, so until then editing
   them in dev is refused ("can't be in the future"). Add new trades with
   today's date to try the edit page.
+- **Chart colours with 6–7 players:** the palette (ADR 018) passes the
+  colour checks for neighbouring slots, but not every pair is far apart
+  (pink/orange, and green/aqua are the closest). The emoji at each line's
+  end and the list above the chart carry identity, so this is accepted.
+  If players mix lines up, add tap-to-highlight on the legend.
 - The password gate's only brute-force protection is a 1 s delay per wrong
   attempt (ADR 006). Use a password that isn't trivially guessable.

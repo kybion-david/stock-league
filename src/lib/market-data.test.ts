@@ -211,7 +211,9 @@ describe("lookupSymbol", () => {
   it("throws UnsupportedInstrumentError for indices, funds, currencies", async () => {
     const index = chart({ symbol: "^GSPC", currency: "USD", instrumentType: "INDEX" }, [], []);
     const { client } = clientWith(json(index));
-    await expect(client.lookupSymbol("^GSPC")).rejects.toThrow(UnsupportedInstrumentError);
+    const err = await client.lookupSymbol("^GSPC").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UnsupportedInstrumentError);
+    expect((err as Error).message).toBe('"^GSPC" is an index on Yahoo, not a stock, ETF or crypto.');
   });
 });
 

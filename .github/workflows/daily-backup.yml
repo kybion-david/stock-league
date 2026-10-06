@@ -1,0 +1,95 @@
+# Daily backup of the production database (ticket 019, ADR 017).
+# Dumps production with pg_dump, restores the dump into a throwaway Postgres
+# to prove it's usable, and keeps it as a workflow artifact for 90 days.
+# Artifacts are only visible to people with access to this private repo.
+# Restore steps: docs/SPEC.md → Commands. Also runs on PRs that edit this file,
+# so a change is tested against the real database before it's merged.
+name: daily-backup
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/daily-backup.yml
+
+concurrency:
+  group: daily-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # Scratch database the dump is restored into as a check. Gone after the run.
+      scratch:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: scratch
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SCRATCH_URL: postgresql://postgres:scratch@localhost:5432/postgres
+    steps:
+      # pg_dump must be at least the server's major version (Neon runs 18),
+      # and the runner's own client is older, so every tool runs from the
+      # postgres:18 image.
+      - name: Dump production
+        id: dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          name="stock-league-$(date -u +%F)"
+          # Neon's pooler (the "-pooler" host) doesn't suit pg_dump; use the
+          # direct host of the same endpoint.
+          export PGURL="${DATABASE_URL/-pooler./.}"
+          docker run --rm --network host -e PGURL postgres:18 \
+            sh -c 'pg_dump --format=custom --no-owner --no-acl --dbname="$PGURL"' > "$name.dump"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "Dumped $(du -h "$name.dump" | cut -f1) to $name.dump"
+
+      - name: Restore into a scratch database
+        env:
+          FILE: ${{ steps.dump.outputs.name }}.dump
+        run: |
+          docker run --rm --network host -v "$PWD:/work" postgres:18 \
+            pg_restore --no-owner --no-acl --single-transaction --dbname="$SCRATCH_URL" "/work/$FILE"
+          counts=$(docker run --rm --network host postgres:18 \
+            psql "$SCRATCH_URL" -v ON_ERROR_STOP=1 -At -F ' | ' -c "
+              select 'schema_migrations', count(*) from schema_migrations
+              union all select 'players', count(*) from players
+              union all select 'instruments', count(*) from instruments
+              union all select 'transactions', count(*) from transactions
+              union all select 'price_snapshots', count(*) from price_snapshots
+              union all select 'fx_snapshots', count(*) from fx_snapshots")
+          echo "$counts"
+          if ! grep -Eq '^schema_migrations \| [1-9]' <<< "$counts"; then
+            echo "::error::The restored database has no migrations: the dump looks empty."
+            exit 1
+          fi
+          {
+            echo "### Backup $FILE restored OK"
+            echo
+            echo "| Table | Rows |"
+            echo "|---|---|"
+            sed 's/^/| /; s/$/ |/' <<< "$counts"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.dump.outputs.name }}
+          path: ${{ steps.dump.outputs.name }}.dump
+          retention-days: 90
+          # pg_dump's custom format is already compressed.
+          compression-level: 0
+          if-no-files-found: error

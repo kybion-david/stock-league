@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { FormState } from "@/app/_components/form-state";
 import { SubmitButton } from "@/app/_components/submit-button";
 import { Field, FormMessage, inputClass } from "@/app/_components/ui";
@@ -26,10 +26,16 @@ export function TransactionForm({
   players,
   submitLabel,
   pendingLabel,
+  today,
 }: {
   action: Action;
   /** Field values to start from: date, type, instrumentId, shares, amount, note, by. */
   defaults: Record<string, string>;
+  /**
+   * The game day the page was rendered on. When set, a date still showing it
+   * moves on to the new day if the page is left open past midnight.
+   */
+  today?: string;
   instruments: { id: number; symbol: string; name: string }[];
   /** Player names, for the "by" label. */
   players: string[];
@@ -43,24 +49,55 @@ export function TransactionForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4" key={key}>
-      <Fields values={values} instruments={instruments} players={players} />
+      <Fields values={values} instruments={instruments} players={players} today={today} />
       <FormMessage error={state.error} notice={state.notice} />
       <SubmitButton pendingLabel={pendingLabel}>{submitLabel}</SubmitButton>
     </form>
   );
 }
 
+/** Today's game day in the browser (`YYYY-MM-DD`, Europe/Berlin). */
+function gameToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
+}
+
 function Fields({
   values,
   instruments,
   players,
+  today,
 }: {
   values: Record<string, string>;
   instruments: { id: number; symbol: string; name: string }[];
   players: string[];
+  today?: string;
 }) {
   const [type, setType] = useState(values.type);
   const takesShares = type === "buy" || type === "sell";
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  // A phone keeps the tab open for days; without this the next trade would
+  // silently get the day the page was loaded. A date the player picked is
+  // left alone.
+  useEffect(() => {
+    if (!today) return;
+    let shown = today;
+    const follow = () => {
+      const input = dateRef.current;
+      const now = gameToday();
+      if (input && input.value === shown && now > shown) {
+        input.value = now;
+        shown = now;
+      }
+    };
+    follow();
+    document.addEventListener("visibilitychange", follow);
+    window.addEventListener("focus", follow);
+    return () => {
+      document.removeEventListener("visibilitychange", follow);
+      window.removeEventListener("focus", follow);
+    };
+  }, [today]);
 
   return (
     <>
@@ -83,6 +120,7 @@ function Fields({
         <div className="min-w-0 flex-1">
           <Field label="Date">
             <input
+              ref={dateRef}
               type="date"
               name="date"
               defaultValue={values.date}

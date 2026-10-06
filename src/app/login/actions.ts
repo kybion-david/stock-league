@@ -4,10 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   SESSION_COOKIE,
-  SESSION_MAX_AGE_SECONDS,
   checkPassword,
   createSessionToken,
   safeNextPath,
+  sessionCookieOptions,
 } from "@/lib/auth";
 
 export async function login(formData: FormData) {
@@ -23,12 +23,10 @@ export async function login(formData: FormData) {
     redirect(`/login?${params}`);
   }
 
-  (await cookies()).set(SESSION_COOKIE, await createSessionToken(sitePassword), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
-  });
+  (await cookies()).set(
+    SESSION_COOKIE,
+    await createSessionToken(sitePassword),
+    sessionCookieOptions(),
+  );
   redirect(next);
 }

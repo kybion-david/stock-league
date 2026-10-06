@@ -63,6 +63,16 @@ export class UnsupportedInstrumentError extends MarketDataError {}
 /** The symbol exists but has no price for that date (weekend, holiday, not listed yet). */
 export class NoDataError extends MarketDataError {}
 
+/**
+ * True for a `NoDataError`, checked by name as well as by class: under `tsx`
+ * (the ingest CLI) the ESM script and the CJS modules it imports load two
+ * copies of this file, so `instanceof` alone misses the other copy's errors
+ * and every weekend failed instead of carrying the last close forward.
+ */
+export function isNoDataError(err: unknown): boolean {
+  return err instanceof NoDataError || (err instanceof Error && err.name === "NoDataError");
+}
+
 /** The ECB doesn't publish a rate for this currency. */
 export class UnknownCurrencyError extends MarketDataError {}
 
@@ -194,7 +204,7 @@ export function createMarketDataClient(options: MarketDataOptions = {}): MarketD
       const type = YAHOO_TYPES[meta.instrumentType ?? ""];
       if (!type) {
         throw new UnsupportedInstrumentError(
-          `"${symbol}" is a ${meta.instrumentType ?? "unknown type"}, not a stock, ETF or crypto`,
+          `"${symbol}" is ${describeType(meta.instrumentType)} on Yahoo, not a stock, ETF or crypto.`,
         );
       }
       return {
@@ -251,6 +261,13 @@ export function normalizePrice(
     close: digits.replace(/0+$/, "").replace(/\.$/, ""),
     currency: major ?? currency.toUpperCase(),
   };
+}
+
+/** Yahoo's instrument type for people: "INDEX" → "an index", "MUTUALFUND" → "a mutualfund". */
+function describeType(type: string | undefined): string {
+  if (!type) return "an unknown type";
+  const word = type.toLowerCase().replace(/_/g, " ");
+  return `${/^[aeiou]/.test(word) ? "an" : "a"} ${word}`;
 }
 
 function localDate(epochSeconds: number, timeZone: string): string {

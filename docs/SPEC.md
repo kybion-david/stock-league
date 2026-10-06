@@ -49,12 +49,16 @@ Confirmed with the project owner (2026-10-05):
    Every add or edit stores who ("Entered by", a player's name picked on the
    form) and when, so mistakes can be traced. Deletes are permanent and
    leave no trace. Every change is checked against the player's whole
-   ledger (see *Data model*). Dates can't be in the future. Amounts are the
+   ledger (see *Data model*). Dates can't be in the future. The add form's
+   date starts at today and moves on to the new day if the page is left
+   open past midnight, unless the player picked a date. Amounts are the
    EUR total without broker fees; fees are entered as their own fee
    transactions.
 2. **Daily price ingestion:** once a day, after US market close, fetch closing
    prices for every instrument held by anyone, plus EUR FX rates, and store
    them as history. Crypto trades 24/7, so it uses the price at fetch time.
+   Each run first fills rows still missing on the 7 days before (a buy
+   entered the next morning or backdated), so those days get real prices.
 3. **Valuation (ADR 014, `src/lib/valuation.ts`):** for each player and day,
    value = cash + Σ(shares held × close price in EUR).
    Return % = (value − €1,000) / €1,000. Day change = value − the previous
@@ -66,22 +70,38 @@ Confirmed with the project owner (2026-10-05):
 4. **Dashboard:**
    - **Leaderboard (home page `/`, ADR 016, `src/lib/leaderboard.ts`):**
      players ranked by value on the latest day with prices (before the
-     first daily run: today), with total return and day change in € and %,
+     first daily run, or from 2026-11-01 while the latest prices are still
+     from before it: today), with total return and day change in € and %,
      green ▲ for up and red ▼ for down. Equal values share a place. 🥇🥈🥉
      for places 1–3 and 🥄 for last place from 4th down, but no awards before
      the game starts or while everyone is level. The header says which day
      the prices are from; a player whose value uses an old price, or a new
      buy without a price yet, gets a ⏳ note. Before 2026-11-01 the page shows
-     a kick-off countdown and the line-up instead.
+     a kick-off countdown and the line-up instead. Each row opens that
+     player's page (› on the right).
    - **Chart (`/chart`, ADR 018):** every player's value per day from
      2026-11-01 to the latest day with prices, one coloured line per player
      with their emoji at the end, and a dashed €1,000 line. Tap, drag or use
      the arrow keys to pick a day; the list above shows everyone's value and
      return on it, and is the legend. Before the first prices it says when
      the chart starts.
-   - Per-player breakdown of current holdings, their performance, total fees
-     and dividends.
-   - Daily movers: best and worst day, for fun.
+   - **Player page (`/portfolio/<id>`, `src/lib/portfolio.ts`):** tap a
+     leaderboard row to open it. It shows the player's place ("2nd of 5"),
+     value, total and day change on the leaderboard's day; cash, invested
+     value, fees paid, dividends and the gain or loss booked by selling;
+     each holding (biggest first) with shares, average cost, share of the
+     player's value, gain or loss in € and %, and a ⏳ note if its price is
+     old or missing; instruments sold out of with what they made; their own
+     line of the value chart; and their whole transaction history (each row
+     opens its edit page). Before 2026-11-01 it shows the kick-off date and
+     €1,000 instead of a place.
+   - **Fun stats (`/stats`, ADR 019, `src/lib/stats.ts`):** for the
+     leaderboard's day: today's top gainer and biggest loser (players, in €
+     and %), hottest and coldest pick (instruments, % change of the EUR
+     price, with who holds them), best and worst single day so far (from day
+     2), best and worst pick of the game (player and instrument, € gain
+     including sold shares), and the fee champion. A stat that doesn't apply
+     yet shows "n/a". Linked from the home page.
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
 6. **Players and instruments** (`/players`, `/instruments`): anyone can add
@@ -89,7 +109,8 @@ Confirmed with the project owner (2026-10-05):
    is added by its Yahoo symbol alone: it's checked with Yahoo, which also
    supplies name, type, currency and exchange. Name, type, currency and
    exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
-   names and symbols are rejected. Nothing can be deleted.
+   names and symbols are rejected, whatever their case ("dave" next to
+   "Dave"). Nothing can be deleted.
 
 Nice-to-have (not MVP): prizes/penalties display, fun badges/titles,
 notifications to a group chat, "what if everyone bought the S&P 500"
@@ -144,7 +165,9 @@ from it, never stored as the source of truth. Postgres tables, created by
   those prices are in. Weekends and holidays carry the last close forward
   (and the ECB's last published rate), so a missing row means a failed
   fetch, not a closed market. Rows are upserted: re-running a day updates
-  it, and a failed symbol leaves its stored row alone.
+  it, and a failed symbol leaves its stored row alone. `fillGaps` adds
+  rows still missing on the 7 days before a run's date (late-entered
+  trades, a failed day) without re-fetching stored ones.
 - **`schema_migrations`:** applied migration file names (managed by the
   migration runner).
 
@@ -185,10 +208,15 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   `npm run ingest` against production with the `DATABASE_URL` secret,
   retries once after 10 minutes, and a failed run shows red in Actions and
   emails whoever last edited the schedule.
+- **Backups (ADR 017):** `.github/workflows/daily-backup.yml` dumps
+  production with `pg_dump` (from the `postgres:18` image, over Neon's
+  direct host) at 03:17 UTC, restores the dump into a throwaway Postgres to
+  check it, and keeps it as a workflow artifact for 90 days.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
-  `SITE_PASSWORD`.
+  `SITE_PASSWORD`, and the proxy renews it on visits once it's a day old,
+  so active players stay logged in.
 - **Charts (ADR 018):** no library. Plain SVG laid out by `src/lib/chart.ts`.
 - **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
@@ -212,16 +240,23 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/_components/`: shared components and helpers (`_` keeps the
   folder out of routing). `SubmitButton` gives any server-action form a
   pending state; `ui.tsx` has the page shell (`Page`), `Field` and
-  `FormMessage`; `form-state.ts` is the `useActionState` result shape.
+  `FormMessage`; `form-state.ts` is the `useActionState` result shape;
+  `score.tsx` has the green/red gain chip (`Change`, `tone`) and the
+  medal emojis (`AWARDS`).
 - `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
   pages, their server actions (`actions.ts`) and client forms.
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
   `[playerId]/` shows their position, history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
-  `transaction-forms.tsx` and `format.ts` (signed amounts) sit alongside.
+  `transaction-forms.tsx`, `format.ts` (signed amounts) and `history.tsx`
+  (the transaction list, also used by the player page) sit alongside.
 - `src/app/page.tsx`: the home page with the leaderboard.
+- `src/app/not-found.tsx`: the 404 page for unknown URLs and missing
+  players, instruments or transactions.
 - `src/app/chart/`: the value chart page and its client component
-  (`value-chart.tsx`).
+  (`value-chart.tsx`), which the player page reuses for one player.
+- `src/app/portfolio/[id]/`: the player page.
+- `src/app/stats/`: the fun stats page.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -229,10 +264,14 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
-  `latestSnapshotDate`; pure `valuePlayer` / `valueSeries` underneath),
+  `latestSnapshotDate`; `loadGame` + `standingsFrom` to value several ways
+  from one load; pure `valuePlayer` / `valueSeries` underneath),
   the leaderboard (`leaderboard.ts`: day to show, places, awards,
-  old-price notes, day formatting), and chart layout (`chart.ts`: scales,
-  ticks, line paths, end labels, colour slots).
+  old-price notes, day formatting), chart layout (`chart.ts`: scales,
+  ticks, line paths, end labels, colour slots), the player page's data
+  (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
+  series and history), and fun stats (`stats.ts`: `funStats` plus a pure
+  function per stat).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
@@ -243,8 +282,10 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `ingest.mts` is the snapshot ingestion CLI.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
-  Azure SWA), `daily-ingest.yml` (the daily job, ADR 015), `docs-check.yml`, and `market-data-live.yml` (live market-data test on a runner; runs on demand
-  and on PRs that touch `src/lib/market-data*.ts`).
+  Azure SWA), `daily-ingest.yml` (the daily job, ADR 015),
+  `daily-backup.yml` (daily database backup, ADR 017), `docs-check.yml`,
+  and `market-data-live.yml` (live market-data test on a runner; runs on
+  demand and on PRs that touch `src/lib/market-data*.ts`).
 - `infra/`: Terraform for the Azure resource group and Static Web App
   (ADR 009). State is kept outside the repo.
 
@@ -267,7 +308,8 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   today's **UTC** date. `npm run ingest -- 2026-11-06` does one date, and
   `npm run ingest -- 2026-11-01 2026-11-30` backfills a range (inclusive).
   Safe to re-run. Every symbol is attempted, and the exit code is 1 if any
-  failed (ADR 012).
+  failed (ADR 012). Before the first date it fills rows still missing on
+  the 7 days before it.
 - **Run the daily job by hand** (to redo or fill a day in production):
   `gh workflow run daily-ingest -f date=2026-11-06`, or *Run workflow* on
   the Actions tab. Without a date it ingests the UTC date 6 hours ago, so
@@ -277,6 +319,29 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 - `npm run test:live`: live calls to Yahoo and Frankfurter
   (`src/lib/market-data.integration.test.ts`). `npm test` skips them; unit
   tests never touch the network.
+
+### Backups (ADR 017)
+
+- **Back up now:** `gh workflow run daily-backup`, or *Run workflow* on the
+  Actions tab. Each run's summary lists the row count of every table.
+- **Download a backup:** open a `daily-backup` run in the Actions tab and
+  download the `stock-league-YYYY-MM-DD` artifact, or
+  `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump`.
+- **Restore** needs `pg_restore` 18 or newer. Without a local install, run
+  it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:18 pg_restore …`.
+  Use Neon's **direct** connection string (the host without `-pooler`).
+  1. Try it on a scratch database first: in the Neon console, add an empty
+     database (for example `restore_test`) to the `dev` branch, then
+     `pg_restore --no-owner --no-acl --single-transaction --dbname="<its
+     connection string>" stock-league-YYYY-MM-DD.dump`. Check
+     `select count(*) from transactions`.
+  2. Replace production with it:
+     `pg_restore --clean --if-exists --no-owner --no-acl --single-transaction
+     --dbname="<production connection string>" stock-league-YYYY-MM-DD.dump`.
+     This drops and recreates every table in one transaction, so it either
+     fully works or changes nothing. Then re-run `daily-ingest` for any
+     days after the backup.
+  3. Drop the scratch database.
 
 ### Deploy (ADR 009)
 

@@ -33,10 +33,14 @@ export interface Leaderboard {
 /**
  * The latest day with prices. Before the first daily run, today's game day,
  * so the line-up still shows. Not simply "today": until tonight's run every
- * holding would use yesterday's price and show no day change.
+ * holding would use yesterday's price and show no day change. Once the game
+ * has started, prices from before kick-off (someone bought early) don't keep
+ * the board on a pre-game day: it shows today instead.
  */
 export function leaderboardDate(lastUpdated: string | null, today: string): string {
-  return lastUpdated ?? today;
+  if (lastUpdated === null) return today;
+  if (lastUpdated < GAME_START_DATE && today >= GAME_START_DATE) return today;
+  return lastUpdated;
 }
 
 /** Places and awards for standings already sorted by value, highest first. */

@@ -39,8 +39,22 @@ export function cleanPlayerInput(input: PlayerInput): { name: string; emoji: str
   return { name, emoji: emoji || null };
 }
 
+/**
+ * Throws if another player already has this name in any case ("dave" next
+ * to "Dave" would be two lines nobody can tell apart). The column's unique
+ * constraint only catches exact matches.
+ */
+async function checkNameFree(db: Db, name: string, id: number | null): Promise<void> {
+  const [taken] = await db.query<{ name: string }>(
+    "select name from players where lower(name) = lower($1) and id is distinct from $2",
+    [name, id],
+  );
+  if (taken) throw new InputError(`There's already a player called ${taken.name}.`);
+}
+
 export async function createPlayer(db: Db, input: PlayerInput): Promise<Player> {
   const { name, emoji } = cleanPlayerInput(input);
+  await checkNameFree(db, name, null);
   try {
     const [row] = await db.query<Player>(
       "insert into players (name, emoji) values ($1, $2) returning id, name, emoji",
@@ -55,6 +69,7 @@ export async function createPlayer(db: Db, input: PlayerInput): Promise<Player> 
 
 export async function updatePlayer(db: Db, id: number, input: PlayerInput): Promise<Player> {
   const { name, emoji } = cleanPlayerInput(input);
+  await checkNameFree(db, name, id);
   try {
     const [row] = await db.query<Player>(
       "update players set name = $2, emoji = $3 where id = $1 returning id, name, emoji",

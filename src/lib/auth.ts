@@ -6,6 +6,11 @@
 
 export const SESSION_COOKIE = "sl_session";
 export const SESSION_MAX_AGE_SECONDS = 90 * 24 * 60 * 60;
+/**
+ * A valid session older than this is re-issued for another 90 days on the
+ * next visit, so players who use the site aren't logged out mid-game.
+ */
+export const SESSION_RENEW_AFTER_SECONDS = 24 * 60 * 60;
 
 const encoder = new TextEncoder();
 
@@ -48,6 +53,23 @@ export async function createSessionToken(
 ): Promise<string> {
   const payload = `v1.${Math.floor(nowMs / 1000) + SESSION_MAX_AGE_SECONDS}`;
   return `${payload}.${await hmacHex(sitePassword, payload)}`;
+}
+
+/** Cookie settings for the session, at login and when it's renewed. */
+export function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  };
+}
+
+/** True if a verified `token` was issued more than `SESSION_RENEW_AFTER_SECONDS` ago. */
+export function sessionNeedsRenewal(token: string, nowMs: number = Date.now()): boolean {
+  const expiresAt = Number(token.split(".")[1]);
+  return expiresAt - nowMs / 1000 < SESSION_MAX_AGE_SECONDS - SESSION_RENEW_AFTER_SECONDS;
 }
 
 /** True if `token` was signed with the current password and hasn't expired. */

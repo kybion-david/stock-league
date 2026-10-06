@@ -14,6 +14,6 @@ its visibility).
 
 ## Acceptance criteria
 
-- [ ] A backup is produced automatically every day
-- [ ] Restore steps documented in `docs/SPEC.md` → Commands and tested once against a scratch Neon branch/database
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] A backup is produced automatically every day
+- [x] Restore steps documented in `docs/SPEC.md` → Commands and tested once against a scratch Neon branch/database (tested against scratch Postgres databases, and every run restores into one; not yet into Neon itself, see STATUS)
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

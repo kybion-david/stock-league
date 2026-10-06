@@ -11,7 +11,7 @@ history. Link to it from the leaderboard.
 
 ## Acceptance criteria
 
-- [ ] Holdings table with per-holding gain/loss, cash, fees and dividend totals
-- [ ] Player's own value chart and transaction list
-- [ ] Linked from leaderboard; phone-friendly
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)
+- [x] Holdings table with per-holding gain/loss, cash, fees and dividend totals
+- [x] Player's own value chart and transaction list
+- [x] Linked from leaderboard; phone-friendly
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

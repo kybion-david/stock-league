@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SESSION_COOKIE, createSessionToken } from "@/lib/auth";
+import { SESSION_COOKIE, createSessionToken, verifySessionToken } from "@/lib/auth";
 import { config, proxy } from "./proxy";
 
 const PASSWORD = "hunter2";
@@ -47,6 +47,21 @@ describe("proxy", () => {
       const res = await proxy(request(path, token));
       expect(res.headers.get("x-middleware-next")).toBe("1");
     }
+  });
+
+  it("renews a session that is more than a day old, so active players stay logged in", async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const fresh = await proxy(request("/", await createSessionToken(PASSWORD)));
+    expect(fresh.cookies.get(SESSION_COOKIE)).toBeUndefined();
+
+    // Logged in 89 days ago: one day left before this visit.
+    const old = await createSessionToken(PASSWORD, Date.now() - 89 * day);
+    const res = await proxy(request("/players", old));
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+    const renewed = res.cookies.get(SESSION_COOKIE);
+    expect(renewed?.maxAge).toBe(90 * 24 * 60 * 60);
+    expect(renewed?.httpOnly).toBe(true);
+    expect(await verifySessionToken(renewed?.value, PASSWORD, Date.now() + 80 * day)).toBe(true);
   });
 
   it("always lets the login page through", async () => {

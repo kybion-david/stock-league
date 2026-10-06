@@ -42,4 +42,6 @@ What gets easier, what gets harder, what we gave up.
 | 014 | [Valuation: exact cents, last known price, average cost](014-valuation.md) | Accepted |
 | 015 | [Daily job: GitHub Actions cron, date counted back 6 hours, one retry](015-daily-ingest-job.md) | Accepted |
 | 016 | [Leaderboard: latest priced day, shared places, medals only when it matters](016-leaderboard-day-and-places.md) | Accepted |
+| 017 | [Daily backup: pg_dump to a workflow artifact, restore-checked every run](017-daily-db-backup.md) | Accepted |
 | 018 | [Value chart: plain SVG, no chart library](018-value-chart-plain-svg.md) | Accepted |
+| 019 | [Fun stats: own page, € not %, records from day 2](019-fun-stats.md) | Accepted |

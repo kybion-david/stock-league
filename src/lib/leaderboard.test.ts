@@ -88,6 +88,13 @@ describe("leaderboardDate", () => {
     expect(leaderboardDate("2026-11-03", "2026-11-04")).toBe("2026-11-03");
     expect(leaderboardDate(null, "2026-10-05")).toBe("2026-10-05");
   });
+
+  it("doesn't stay on a pre-game price day once the game has started", () => {
+    expect(leaderboardDate("2026-10-30", "2026-10-31")).toBe("2026-10-30");
+    expect(leaderboardDate("2026-10-31", "2026-11-01")).toBe("2026-11-01");
+    expect(leaderboardDate("2026-10-31", "2026-11-02")).toBe("2026-11-02");
+    expect(leaderboardDate("2026-11-01", "2026-11-02")).toBe("2026-11-01");
+  });
 });
 
 describe("priceNote", () => {

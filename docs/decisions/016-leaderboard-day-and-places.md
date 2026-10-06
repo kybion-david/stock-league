@@ -17,7 +17,10 @@ and when medals make sense. Prices arrive once a day at 22:30 UTC
   everyone: every player flagged stale and a day change of about zero all
   day. Before the first run ever, show today's game day (Berlin), so the
   line-up shows before and on 2026-11-01. The header says which day the
-  prices are from.
+  prices are from. Likewise, from 2026-11-01 on, if the latest prices are
+  from before kick-off (someone bought early, so the job already stored
+  prices in October), show today. Otherwise the board would sit on a
+  pre-game day on kick-off day, with the countdown saying "0 days to go".
 - **Equal values share a place** (1, 1, 3), in name order.
 - **Medals** 🥇🥈🥉 for places 1–3 and a wooden spoon 🥄 for last place
   from 4th down. No awards before 2026-11-01, or while everyone is level, so

@@ -1,25 +1,18 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db/postgres";
+import { AWARDS, Change } from "@/app/_components/score";
 import {
   daysBetween,
   formatDay,
   leaderboard,
   priceNote,
-  type Award,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
-import { formatEuroCents, formatSignedEuroCents, formatSignedPercent } from "@/lib/money";
+import { formatEuroCents } from "@/lib/money";
 import { berlinToday } from "@/lib/transactions";
 import { GAME_START_DATE } from "@/lib/valuation";
 
 const STAKE_CENTS = 100_000;
-
-const AWARDS: Record<Award, { emoji: string; label: string }> = {
-  gold: { emoji: "🥇", label: "1st place" },
-  silver: { emoji: "🥈", label: "2nd place" },
-  bronze: { emoji: "🥉", label: "3rd place" },
-  spoon: { emoji: "🥄", label: "Wooden spoon" },
-};
 
 export default async function Home() {
   const today = berlinToday();
@@ -68,9 +61,15 @@ export default async function Home() {
         </Link>
         <Link
           href="/chart"
-          className="col-span-2 rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
         >
-          📈 The race: value over time
+          📈 The race
+        </Link>
+        <Link
+          href="/stats"
+          className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          🎲 Fun stats
         </Link>
         <Link
           href="/players"
@@ -111,54 +110,40 @@ function Row({ row, started }: { row: LeaderboardRow; started: boolean }) {
   const award = row.award ? AWARDS[row.award] : null;
   const note = priceNote(row.holdings);
   return (
-    <li
-      className={`flex flex-col gap-2 px-4 py-3 ${row.award === "gold" ? "bg-amber-400/10" : ""}`}
-    >
-      <div className="flex items-center gap-3">
-        {started && (
-          <span
-            className="w-8 shrink-0 text-center text-2xl font-semibold tabular-nums text-foreground/60"
-            role="img"
-            aria-label={award ? award.label : `Place ${row.place}`}
-          >
-            {award ? award.emoji : row.place}
+    <li className={row.award === "gold" ? "bg-amber-400/10" : undefined}>
+      <Link
+        href={`/portfolio/${row.player.id}`}
+        className="flex flex-col gap-2 px-4 py-3 hover:bg-foreground/5"
+      >
+        <div className="flex items-center gap-3">
+          {started && (
+            <span
+              className="w-8 shrink-0 text-center text-2xl font-semibold tabular-nums text-foreground/60"
+              role="img"
+              aria-label={award ? award.label : `Place ${row.place}`}
+            >
+              {award ? award.emoji : row.place}
+            </span>
+          )}
+          <span className="shrink-0 text-2xl" aria-hidden>
+            {row.player.emoji ?? "🙂"}
           </span>
-        )}
-        <span className="shrink-0 text-2xl" aria-hidden>
-          {row.player.emoji ?? "🙂"}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-lg font-semibold">{row.player.name}</span>
-        <span className="shrink-0 text-lg font-semibold tabular-nums">
-          {formatEuroCents(row.valueCents)}
-        </span>
-      </div>
-      {started && (
-        <div className="flex flex-wrap gap-2 pl-11 text-sm">
-          <Change label="Total" cents={row.returnCents} rate={row.returnRate} />
-          <Change label="Day" cents={row.dayChangeCents} rate={row.dayChangeRate} />
+          <span className="min-w-0 flex-1 truncate text-lg font-semibold">{row.player.name}</span>
+          <span className="shrink-0 text-lg font-semibold tabular-nums">
+            {formatEuroCents(row.valueCents)}
+          </span>
+          <span className="-ml-1 shrink-0 text-foreground/40" aria-hidden>
+            ›
+          </span>
         </div>
-      )}
-      {note && <p className="pl-11 text-xs text-foreground/50">⏳ {note}</p>}
+        {started && (
+          <div className="flex flex-wrap gap-2 pl-11 text-sm">
+            <Change label="Total" cents={row.returnCents} rate={row.returnRate} />
+            <Change label="Day" cents={row.dayChangeCents} rate={row.dayChangeRate} />
+          </div>
+        )}
+        {note && <p className="pl-11 text-xs text-foreground/50">⏳ {note}</p>}
+      </Link>
     </li>
-  );
-}
-
-/** A gain or loss chip: green and ▲ for up, red and ▼ for down. */
-function Change({ label, cents, rate }: { label: string; cents: number; rate: number | null }) {
-  const color =
-    cents > 0
-      ? "text-green-700 dark:text-green-400"
-      : cents < 0
-        ? "text-red-600 dark:text-red-400"
-        : "text-foreground/60";
-  return (
-    <span className="rounded-full bg-foreground/5 px-2 py-0.5 tabular-nums">
-      <span className="text-foreground/60">{label} </span>
-      <span className={color}>
-        {cents > 0 ? "▲ " : cents < 0 ? "▼ " : ""}
-        {formatSignedEuroCents(cents)}
-        {rate !== null && ` (${formatSignedPercent(rate)})`}
-      </span>
-    </span>
   );
 }
