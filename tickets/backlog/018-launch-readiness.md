@@ -1,7 +1,7 @@
 # 018. Launch readiness for 2026-11-01
 
 **Type:** chore
-**Depends on:** 009, 013, 014
+**Depends on:** 009, 013, 014, 021
 
 ## Description
 
