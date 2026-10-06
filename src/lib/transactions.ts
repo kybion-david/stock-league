@@ -69,7 +69,7 @@ const MAX_NOTE_LENGTH = 200;
 // Far above anything in a €1,000 game, and well inside the integer column.
 const MAX_AMOUNT_CENTS = 100_000_000;
 
-/** Today's game day (`YYYY-MM-DD` in Europe/Berlin); the pretend day in demo mode (ADR 020). */
+/** Today's game day (`YYYY-MM-DD` in Europe/Berlin); the pretend day in demo mode (ADR 021). */
 export function berlinToday(now?: Date): string {
   if (!now && DEMO) return DEMO_TODAY;
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(now ?? new Date());

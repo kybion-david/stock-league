@@ -68,7 +68,7 @@ export default async function DemoPage() {
       </section>
 
       <p className="text-sm text-foreground/60">
-        Demo mode is switched on in the code (ADR 020). Reverting the pull request that added it
+        Demo mode is switched on in the code (ADR 021). Reverting the pull request that added it
         brings back the real, empty game.
       </p>
     </Page>

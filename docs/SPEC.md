@@ -105,14 +105,15 @@ Confirmed with the project owner (2026-10-05):
 5. **Access:** an unlisted URL protected by **one shared password**. No user
    accounts. When entering a transaction, players pick their name from a list.
 6. **Players and instruments** (`/players`, `/instruments`): anyone can add
-   or rename players (name, optional emoji) and add instruments. An instrument
-   is added by its Yahoo symbol alone: it's checked with Yahoo, which also
+   or rename players (name, optional emoji) and add instruments. The emoji
+   is picked from a grid of about 160 in the form, or left empty (ADR 020).
+   An instrument is added by its Yahoo symbol alone: it's checked with Yahoo, which also
    supplies name, type, currency and exchange. Name, type, currency and
    exchange can be edited afterwards; the symbol can't (ADR 011). Duplicate
    names and symbols are rejected, whatever their case ("dave" next to
    "Dave"). Nothing can be deleted.
 
-7. **Demo season (temporary, ADR 020):** while it's switched on, the site
+7. **Demo season (temporary, ADR 021):** while it's switched on, the site
    shows a made-up game instead of the real one: seven fake players with
    their own styles, fake prices, and "today" pretending to be 2027-01-29
    (day 90). A banner on every page links to `/demo`, which introduces the
@@ -209,7 +210,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   `DATABASE_URL` from the app and from the daily job.
 - **Database access (ADR 008):** `postgres` (postgres.js) driver, no ORM,
   plain SQL migrations, PGlite (in-memory Postgres) for tests, and `tsx`
-  to run TypeScript scripts. While the demo season is on (ADR 020), the
+  to run TypeScript scripts. While the demo season is on (ADR 021), the
   app itself runs on PGlite too, so it's a runtime dependency for now.
 - **Daily job (ADR 015):** GitHub Actions scheduled workflow
   (`.github/workflows/daily-ingest.yml`) at 22:30 UTC. It runs
@@ -252,7 +253,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `score.tsx` has the green/red gain chip (`Change`, `tone`) and the
   medal emojis (`AWARDS`).
 - `src/app/players/`, `src/app/instruments/`: list + add pages, `[id]` edit
-  pages, their server actions (`actions.ts`) and client forms.
+  pages, their server actions (`actions.ts`) and client forms. The player
+  form's emoji field is `players/emoji-picker.tsx` (ADR 020).
 - `src/app/trades/`: transaction entry. `page.tsx` picks a player,
   `[playerId]/` shows their position, history and add form,
   `[playerId]/[id]/` edits or deletes one transaction. `actions.ts`,
@@ -266,11 +268,12 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/portfolio/[id]/`: the player page.
 - `src/app/stats/`: the fun stats page.
 - `src/app/demo/` and `src/app/_components/demo-banner.tsx`: the demo
-  season's intro page and banner (ADR 020, temporary).
+  season's intro page and banner (ADR 021, temporary).
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
-  access (`players.ts`, `instruments.ts`), transaction entry
+  access (`players.ts`, `instruments.ts`), the emoji picker's list
+  (`emoji.ts`), transaction entry
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
@@ -282,7 +285,7 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
   series and history), and fun stats (`stats.ts`: `funStats` plus a pure
   function per stat).
-- `src/lib/demo/`: the demo season (ADR 020, temporary): the switch and
+- `src/lib/demo/`: the demo season (ADR 021, temporary): the switch and
   pretend day (`config.ts`), the generated season (`season.ts`), its bulk
   loader (`load.ts`) and the in-memory database `getDb()` returns in demo
   mode (`db.ts`).
@@ -309,7 +312,7 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 
 - `npm install`: install dependencies (CI uses `npm ci`).
 - `npm run dev`: dev server at http://localhost:3000. While the demo season
-  is in the code (ADR 020) it shows the demo; `STOCK_LEAGUE_DEMO=0 npm run
+  is in the code (ADR 021) it shows the demo; `STOCK_LEAGUE_DEMO=0 npm run
   dev` uses `DATABASE_URL` as normal.
 - `npm run lint`: ESLint.
 - `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
@@ -394,7 +397,7 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   or any local Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.
 
-- `STOCK_LEAGUE_DEMO` (build time, ADR 020): `1` builds the demo season,
+- `STOCK_LEAGUE_DEMO` (build time, ADR 021): `1` builds the demo season,
   `0` the real app. `next.config.ts` defaults it to `1` while the demo is
   in the code, so production shows the demo without any app setting.
 

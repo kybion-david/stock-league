@@ -1,5 +1,5 @@
 /**
- * Demo season switch (ADR 020). `next.config.ts` turns it on for every Next
+ * Demo season switch (ADR 021). `next.config.ts` turns it on for every Next
  * build while the demo is in the code; tests and scripts never see it.
  * Turn it off for good by reverting the demo PR.
  */

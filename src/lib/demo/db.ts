@@ -7,7 +7,7 @@ import { demoSeason } from "./season";
 let opening: Promise<Db> | undefined;
 
 /**
- * The app's database in demo mode (ADR 020): an in-memory PGlite per server
+ * The app's database in demo mode (ADR 021): an in-memory PGlite per server
  * instance, migrated and filled with the demo season on first use. The real
  * database is never touched. Changes made on the site live until the
  * instance restarts.

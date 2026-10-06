@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DEMO, DEMO_TODAY } from "@/lib/demo/config";
 import { formatDay } from "@/lib/leaderboard";
 
-/** A strip on every page while demo mode is on (ADR 020), so nobody mistakes it for the real game. */
+/** A strip on every page while demo mode is on (ADR 021), so nobody mistakes it for the real game. */
 export function DemoBanner() {
   if (!DEMO) return null;
   return (

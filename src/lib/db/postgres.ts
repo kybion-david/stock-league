@@ -63,7 +63,7 @@ let shared: Db | undefined;
 /**
  * The app's shared connection, created on first use so that importing this
  * module (e.g. during `next build`) never needs `DATABASE_URL`. In demo mode
- * it's the in-memory demo season instead (ADR 020).
+ * it's the in-memory demo season instead (ADR 021).
  */
 export function getDb(): Db {
   if (!shared && DEMO) shared = demoDb();

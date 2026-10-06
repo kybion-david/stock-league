@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Self-contained server in .next/standalone; keeps the deploy under Azure
   // SWA's 250 MB app limit (ADR 009).
   output: "standalone",
-  // Demo season (ADR 020): on in every Next build until the demo PR is
+  // Demo season (ADR 021): on in every Next build until the demo PR is
   // reverted. `STOCK_LEAGUE_DEMO=0 npm run dev` uses the real database.
   env: { STOCK_LEAGUE_DEMO: process.env.STOCK_LEAGUE_DEMO ?? "1" },
   // Demo mode runs PGlite in the server; load it from node_modules (it reads

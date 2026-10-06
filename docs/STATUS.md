@@ -1,11 +1,11 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-06 (demo season live in production, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-06 (demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
-- **⚠️ Production is showing the DEMO SEASON (2026-10-06, ADR 020).** At
+- **⚠️ Production is showing the DEMO SEASON (2026-10-06, ADR 021).** At
   the owner's request, the live site shows a made-up game: seven fake
   players with their own styles (`/demo` introduces them), fake prices and
   "today" pretending to be 2027-01-29, with a yellow banner on every page.
@@ -49,6 +49,13 @@ session; update at the end of every change. Last updated: 2026-10-06 (demo seaso
   dev branch on 2026-10-05, at 375 px width with no horizontal scroll.
   Production has no players or instruments yet: the owner (or the players)
   add the real ones before 2026-11-01.
+- **Emoji picker (2026-10-06, ADR 020):** the player form's emoji is
+  picked from a grid of about 160 emojis (or "No emoji") instead of typed
+  from the phone's keyboard. Own component, no library. Checked with
+  Playwright at 375 px, light and dark, against a local Postgres: add with
+  a picked emoji, the picker clearing after an add, outside tap and Escape
+  closing it, the current emoji highlighted on the edit page, and clearing
+  it. No horizontal scroll, no console errors. Not yet seen on the live site.
 - **Neon is provisioned (2026-10-05):** project in AWS eu-central-1
   (Frankfurt), Postgres 18 (the server reports 18.6; earlier docs said
   17). Branch `production` is the real database, and
@@ -241,7 +248,7 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
 lowest number whose dependencies are done. 001–017 and 019 are done.
-**First, once the owner has seen it: revert the demo season PR** (ADR 020;
+**First, once the owner has seen it: revert the demo season PR** (ADR 021;
 a plain `git revert` of its merge commit, as a PR). Until then, local
 `npm run dev` shows the demo too; use `STOCK_LEAGUE_DEMO=0`.
 Next: 018 (launch readiness). In the first days after 2026-11-01, check the

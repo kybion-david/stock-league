@@ -1,4 +1,4 @@
-# 020. Demo season: in-memory fake game behind a build switch
+# 021. Demo season: in-memory fake game behind a build switch
 
 **Status:** Accepted (temporary: revert before kick-off)
 **Date:** 2026-10-06

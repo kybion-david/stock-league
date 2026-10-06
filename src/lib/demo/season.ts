@@ -2,7 +2,7 @@ import { STARTING_CASH_CENTS } from "@/lib/ledger";
 import { DEMO_TODAY } from "./config";
 
 /**
- * A made-up season for demo mode (ADR 020): seven fake players with their
+ * A made-up season for demo mode (ADR 021): seven fake players with their
  * own investing styles, real-looking instruments and deterministic fake
  * prices from the day before kick-off to `DEMO_TODAY`. Pure: the same input
  * always gives the same season, so every server instance shows the same game.
@@ -72,19 +72,19 @@ export const DEMO_PLAYERS: DemoPlayer[] = [
   },
   {
     name: "Max",
-    emoji: "🚀",
+    emoji: "🪙",
     trait: "The crypto degen",
     style: "All in on Bitcoin, Ether, Solana and Dogecoin. Buys dips, chases pumps.",
   },
   {
     name: "Jonas",
-    emoji: "📊",
+    emoji: "🎰",
     trait: "The day trader",
     style: "In and out of NVIDIA and Tesla every week, with a €1 fee each time.",
   },
   {
     name: "Sofia",
-    emoji: "🍎",
+    emoji: "🤖",
     trait: "The Big Tech believer",
     style: "Apple, Microsoft and NVIDIA. Takes some profit, collects dividends.",
   },
@@ -96,13 +96,13 @@ export const DEMO_PLAYERS: DemoPlayer[] = [
   },
   {
     name: "Mia",
-    emoji: "🇪🇺",
+    emoji: "🏰",
     trait: "The European value hunter",
     style: "SAP, ASML and Vodafone in London (pence!). Reinvests her dividends.",
   },
   {
     name: "Erik",
-    emoji: "💤",
+    emoji: "😴",
     trait: "The procrastinator",
     style: "Forgot the game started. First trade in December, overspent by a few euros.",
   },
