@@ -112,6 +112,13 @@ Confirmed with the project owner (2026-10-05):
    names and symbols are rejected, whatever their case ("dave" next to
    "Dave"). Nothing can be deleted.
 
+7. **Demo season (temporary, ADR 020):** while it's switched on, the site
+   shows a made-up game instead of the real one: seven fake players with
+   their own styles, fake prices, and "today" pretending to be 2027-01-29
+   (day 90). A banner on every page links to `/demo`, which introduces the
+   cast. Changes made on it live in memory only. The real database, the
+   daily job and backups are unaffected. Off by reverting the demo PR.
+
 Nice-to-have (not MVP): prizes/penalties display, fun badges/titles,
 notifications to a group chat, "what if everyone bought the S&P 500"
 benchmark line.
@@ -202,7 +209,8 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   `DATABASE_URL` from the app and from the daily job.
 - **Database access (ADR 008):** `postgres` (postgres.js) driver, no ORM,
   plain SQL migrations, PGlite (in-memory Postgres) for tests, and `tsx`
-  to run TypeScript scripts.
+  to run TypeScript scripts. While the demo season is on (ADR 020), the
+  app itself runs on PGlite too, so it's a runtime dependency for now.
 - **Daily job (ADR 015):** GitHub Actions scheduled workflow
   (`.github/workflows/daily-ingest.yml`) at 22:30 UTC. It runs
   `npm run ingest` against production with the `DATABASE_URL` secret,
@@ -257,6 +265,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`value-chart.tsx`), which the player page reuses for one player.
 - `src/app/portfolio/[id]/`: the player page.
 - `src/app/stats/`: the fun stats page.
+- `src/app/demo/` and `src/app/_components/demo-banner.tsx`: the demo
+  season's intro page and banner (ADR 020, temporary).
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -272,6 +282,10 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
   series and history), and fun stats (`stats.ts`: `funStats` plus a pure
   function per stat).
+- `src/lib/demo/`: the demo season (ADR 020, temporary): the switch and
+  pretend day (`config.ts`), the generated season (`season.ts`), its bulk
+  loader (`load.ts`) and the in-memory database `getDb()` returns in demo
+  mode (`db.ts`).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
@@ -294,7 +308,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
 Requires Node 22 (`nvm use` reads `.nvmrc`).
 
 - `npm install`: install dependencies (CI uses `npm ci`).
-- `npm run dev`: dev server at http://localhost:3000.
+- `npm run dev`: dev server at http://localhost:3000. While the demo season
+  is in the code (ADR 020) it shows the demo; `STOCK_LEAGUE_DEMO=0 npm run
+  dev` uses `DATABASE_URL` as normal.
 - `npm run lint`: ESLint.
 - `npm run typecheck`: generate Next route types, then `tsc --noEmit`.
 - `npm test`: Vitest, run once (`npm run test:watch` to watch).
@@ -377,6 +393,10 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   can't handle). For local development, use a separate Neon branch (free)
   or any local Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.
+
+- `STOCK_LEAGUE_DEMO` (build time, ADR 020): `1` builds the demo season,
+  `0` the real app. `next.config.ts` defaults it to `1` while the demo is
+  in the code, so production shows the demo without any app setting.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
 

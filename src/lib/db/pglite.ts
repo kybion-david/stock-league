@@ -19,7 +19,7 @@ function wrap(pg: PGlite | Transaction): Db {
 }
 
 /**
- * A fresh in-memory Postgres for tests (dev dependency only), with the same
+ * A fresh in-memory Postgres for tests and demo mode (ADR 020), with the same
  * type mapping as the postgres.js client.
  */
 export async function createTestDb(): Promise<Db & { close(): Promise<void> }> {
