@@ -1,0 +1,31 @@
+# Apply pending migrations to the production database (ADR 023). Manual
+# only: start it from the Actions tab or with `gh workflow run db-migrate`,
+# optionally `--ref <branch>` to apply a branch's migrations before its PR
+# merges. Safe to re-run: applied files are skipped.
+name: db-migrate
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Migrate production database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run db:migrate
