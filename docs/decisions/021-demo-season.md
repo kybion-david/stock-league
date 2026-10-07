@@ -1,7 +1,11 @@
 # 021. Demo season: in-memory fake game behind a build switch
 
-**Status:** Accepted (temporary: revert before kick-off)
+**Status:** Ended (reverted on 2026-10-07, ticket 021)
 **Date:** 2026-10-06
+
+The demo season was switched off by reverting its PR (31) on 2026-10-07.
+The code described below is gone from `main`; this record stays for the
+reasoning.
 
 ## Context
 

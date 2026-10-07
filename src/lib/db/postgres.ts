@@ -1,6 +1,4 @@
 import postgres from "postgres";
-import { DEMO } from "@/lib/demo/config";
-import { demoDb } from "@/lib/demo/db";
 import type { Db } from "./db";
 
 const DATE_OID = 1082;
@@ -62,11 +60,9 @@ let shared: Db | undefined;
 
 /**
  * The app's shared connection, created on first use so that importing this
- * module (e.g. during `next build`) never needs `DATABASE_URL`. In demo mode
- * it's the in-memory demo season instead (ADR 021).
+ * module (e.g. during `next build`) never needs `DATABASE_URL`.
  */
 export function getDb(): Db {
-  if (!shared && DEMO) shared = demoDb();
   if (!shared) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
