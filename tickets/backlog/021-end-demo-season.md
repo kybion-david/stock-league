@@ -28,7 +28,7 @@ the owner.
 
 ## Acceptance criteria
 
-- [ ] Demo season reverted and deployed; the live site shows the real game, no demo banner
+- [ ] Demo season reverted and deployed; the live site shows the real game, no demo banner (reverted and merged on 2026-10-07; live site not checked yet)
 - [ ] `npm run db:migrate` run on Neon `production` and `dev`; `select name from schema_migrations` lists every file in `db/migrations/` on both
 - [ ] A manual instrument can be added on the live site (then left in place, or noted for the owner to ignore)
-- [ ] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant): demo mentions removed or marked as past, ADR 021 marked as ended
+- [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant): demo mentions removed or marked as past, ADR 021 marked as ended
