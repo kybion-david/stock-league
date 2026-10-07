@@ -301,7 +301,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
   Azure SWA), `daily-ingest.yml` (the daily job, ADR 015),
-  `daily-backup.yml` (daily database backup, ADR 017), `docs-check.yml`,
+  `daily-backup.yml` (daily database backup, ADR 017), `db-migrate.yml`
+  (apply migrations to production, started by hand, ADR 023), `docs-check.yml`,
   and `market-data-live.yml` (live market-data test on a runner; runs on
   demand and on PRs that touch `src/lib/market-data*.ts`).
 - `infra/`: Terraform for the Azure resource group and Static Web App
@@ -320,6 +321,11 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   and serve it at http://localhost:3000.
 - `npm run db:migrate`: apply pending migrations to `DATABASE_URL` (from
   the environment or `.env`). Safe to re-run.
+- **Migrate production** (ADR 023): `gh workflow run db-migrate`, or *Run
+  workflow* on the Actions tab. For a PR that adds a migration, run it on
+  the PR's branch (`--ref <branch>`) before merging, so the schema is there
+  when the code deploys. The `dev` branch is migrated locally with
+  `npm run db:migrate`.
 - `npm run db:seed`: insert fake dev players, trades and snapshots. Refuses
   if any players exist, so it can't touch real data.
 - `npm run ingest`: fetch and store snapshots in `DATABASE_URL` for
@@ -404,7 +410,7 @@ Where production values live (ADR 009); never in git:
   `DATABASE_URL`.
 - **GitHub Actions secrets:** `AZURE_STATIC_WEB_APPS_API_TOKEN` (SWA
   deployment token, used by `deploy.yml`) and `DATABASE_URL` (for the daily
-  job, ticket 013).
+  job, backups and `db-migrate`).
 - **Owner's machine:** Terraform state at `~/.stock-league/terraform.tfstate`.
 
 ## Conventions
