@@ -17,5 +17,5 @@ plus one page to read everyone's.
 - [x] `/portfolio/<id>/strategy` edits it (up to 1,000 characters, line breaks kept, empty removes it); anyone can edit anyone's, like trades
 - [x] `/strategies` (linked from the home page) lists everyone's, most recently changed first, then who hasn't written one
 - [x] Unit tests for saving, clearing, the length limit and the order
-- [ ] Migration 003 applied to Neon `production` and `dev` (needs the owner's `DATABASE_URL`s, see `docs/STATUS.md`)
+- [ ] Migration 003 applied to Neon `production` and `dev` (production done on 2026-10-07 with the `db-migrate` workflow; `dev` is the owner's, see `docs/STATUS.md`)
 - [x] Context docs updated per AGENTS.md (STATUS, SPEC, ADRs as relevant)

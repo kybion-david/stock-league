@@ -1,7 +1,7 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-07 (ticket 022 done: player strategies, migration 003; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-10-07 (ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
@@ -14,13 +14,13 @@ session; update at the end of every change. Last updated: 2026-10-07 (ticket 022
 - **Production migrations (ADR 023, 2026-10-07):** the `db-migrate`
   workflow applies pending migrations to Neon `production` when started by
   hand (`docs/SPEC.md` → Commands), so agents no longer need the owner's
-  `.env` for it.
+  `.env` for it. Its first run (37665885949, 2026-10-07) applied 002 and
+  003; production is up to date. The `dev` branch isn't yet.
 - **Player strategies done (ticket 022, 2026-10-07):** players write how
   they're playing (≤ 1,000 characters) on `/portfolio/<id>/strategy`; it
   shows on their player page and on `/strategies`, linked from the home
-  page (`src/lib/strategy.ts`, unit-tested on PGlite). Needs **migration
-  003**, which isn't applied to Neon yet: without it the player page and
-  `/strategies` fail in production. Checked on 2026-10-07 with Playwright
+  page (`src/lib/strategy.ts`, unit-tested on PGlite). Migration 003 is
+  applied to production. Checked on 2026-10-07 with Playwright
   at 375 px, light and dark, against the standalone build on a local
   Postgres 16 with the dev seed plus a long-named player: write, edit, the
   1,001-character error (text kept), clearing, an unknown player (404),
@@ -268,13 +268,12 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
 lowest number whose dependencies are done. 001–017, 019, 020 and 022 are done.
-**First: finish ticket 021.** The demo is reverted and deployed. Run the
-`db-migrate` workflow to apply migrations 002 (manual instruments, ADR 022)
-and 003 (player strategies, ticket 022) to production; until then, adding a
-manual instrument there fails, and so do the player pages and
-`/strategies`. The owner migrates the `dev` branch locally
-(`npm run db:migrate` with the dev `DATABASE_URL`). Then check the live
-site.
+**First: finish ticket 021.** The demo is reverted and deployed, and
+production has every migration (2026-10-07). Left: the owner migrates the
+`dev` branch locally (`npm run db:migrate` with the dev `DATABASE_URL`;
+until then dev lacks manual instruments and strategies), and someone checks
+the live site: no demo banner, a manual instrument can be added, and a
+player's strategy can be written.
 Next: 018 (launch readiness, after 021). In the first days after 2026-11-01, check the
 `daily-ingest` runs in the Actions tab: ingestion only fetches instruments
 that someone holds, so those are the first runs that really fetch prices.
