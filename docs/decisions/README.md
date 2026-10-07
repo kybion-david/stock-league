@@ -48,3 +48,4 @@ What gets easier, what gets harder, what we gave up.
 | 020 | [Emoji picker: a fixed grid of our own, no library](020-emoji-picker.md) | Accepted |
 | 021 | [Demo season: in-memory fake game behind a build switch](021-demo-season.md) | Ended (2026-10-07) |
 | 022 | [Manual instruments: a hand-typed price in the normal snapshot table](022-manual-instruments.md) | Accepted |
+| 023 | [Production migrations through a manual workflow](023-manual-migrate-workflow.md) | Accepted |
