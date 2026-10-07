@@ -72,6 +72,12 @@ export default async function Home() {
           🎲 Fun stats
         </Link>
         <Link
+          href="/strategies"
+          className="col-span-2 rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
+        >
+          💬 Strategies
+        </Link>
+        <Link
           href="/players"
           className="rounded-2xl border border-foreground/15 p-4 font-semibold hover:bg-foreground/5"
         >
