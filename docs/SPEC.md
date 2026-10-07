@@ -95,7 +95,15 @@ Confirmed with the project owner (2026-10-05):
      old or missing; instruments sold out of with what they made; their own
      line of the value chart; and their whole transaction history (each row
      opens its edit page). Before 2026-11-01 it shows the kick-off date and
-     €1,000 instead of a place.
+     €1,000 instead of a place. Under the headline sits the player's
+     **strategy** (below).
+   - **Strategies (ticket 022, `src/lib/strategy.ts`):** each player can
+     write how they're playing the game: free text up to 1,000 characters,
+     line breaks kept, shown with the day it last changed (saving the same
+     text keeps the day). `/portfolio/<id>/strategy` writes or edits it;
+     saving it empty removes it. Anyone can edit anyone's, as with trades.
+     `/strategies` (linked from the home page) shows everyone's, most
+     recently changed first, then the players who haven't written one.
    - **Fun stats (`/stats`, ADR 019, `src/lib/stats.ts`):** for the
      leaderboard's day: today's top gainer and biggest loser (players, in €
      and %), hottest and coldest pick (instruments, % change of the EUR
@@ -134,7 +142,8 @@ from it, never stored as the source of truth. Postgres tables, created by
 `db/migrations/` (ADR 008; the SQL file is the exact definition):
 
 - **`players`:** `id`, `name` (unique, non-blank), `emoji` (optional),
-  `created_at`.
+  `strategy` (optional free text, ≤ 1,000 characters, checked in code) and
+  `strategy_updated_at` (when the text last changed), `created_at`.
 - **`instruments`:** `id`, `symbol` (unique; the Yahoo symbol), `name`,
   `type` (`stock | etf | crypto | manual`), `currency` (as Yahoo reports it: usually
   ISO 4217, but London listings report `GBp`, pence; always `EUR` for
@@ -271,7 +280,10 @@ the main checkout; see `AGENTS.md` → Session workflow.
   players, instruments or transactions.
 - `src/app/chart/`: the value chart page and its client component
   (`value-chart.tsx`), which the player page reuses for one player.
-- `src/app/portfolio/[id]/`: the player page.
+- `src/app/portfolio/[id]/`: the player page; `strategy/` edits the
+  player's strategy.
+- `src/app/strategies/`: everyone's strategies. The text block both pages
+  use is `src/app/_components/strategy.tsx`.
 - `src/app/stats/`: the fun stats page.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
@@ -288,7 +300,7 @@ the main checkout; see `AGENTS.md` → Session workflow.
   old-price notes, day formatting), chart layout (`chart.ts`: scales,
   ticks, line paths, end labels, colour slots), the player page's data
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
-  series and history), and fun stats (`stats.ts`: `funStats` plus a pure
+  series and history), player strategies (`strategy.ts`), and fun stats (`stats.ts`: `funStats` plus a pure
   function per stat).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ValueChart } from "@/app/chart/value-chart";
 import { AWARDS, Change, tone } from "@/app/_components/score";
+import { StrategyText } from "@/app/_components/strategy";
 import { Page } from "@/app/_components/ui";
 import { TransactionHistory } from "@/app/trades/history";
 import { parseId } from "@/lib/db/errors";
@@ -12,6 +13,7 @@ import { STARTING_CASH_CENTS } from "@/lib/ledger";
 import { formatEuroCents, formatSignedEuroCents, formatSignedPercent } from "@/lib/money";
 import { getPlayer } from "@/lib/players";
 import { formatPlace, portfolio, type HoldingRow, type Portfolio } from "@/lib/portfolio";
+import { getStrategy } from "@/lib/strategy";
 import { GAME_START_DATE } from "@/lib/valuation";
 
 export async function generateMetadata({ params }: PageProps<"/portfolio/[id]">): Promise<Metadata> {
@@ -24,7 +26,9 @@ const percent = new Intl.NumberFormat("en-IE", { style: "percent", maximumFracti
 
 export default async function PortfolioPage({ params }: PageProps<"/portfolio/[id]">) {
   const id = parseId((await params).id);
-  const p = id === null ? null : await portfolio(getDb(), id);
+  const db = getDb();
+  const [p, strategy] =
+    id === null ? [null, null] : await Promise.all([portfolio(db, id), getStrategy(db, id)]);
   if (!p) notFound();
   const { row, started } = p;
   const note = priceNote(row.holdings);
@@ -45,6 +49,20 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
           </div>
         )}
         {note && <p className="text-xs text-foreground/50">⏳ {note}</p>}
+      </section>
+
+      <section className="flex flex-col gap-2 rounded-2xl border border-foreground/15 p-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-sm uppercase tracking-wide text-foreground/60">Strategy</h2>
+          <Link href={`/portfolio/${row.player.id}/strategy`} className="text-sm underline">
+            {strategy?.text ? "Edit" : "Write one"}
+          </Link>
+        </div>
+        {strategy?.text ? (
+          <StrategyText text={strategy.text} updatedAt={strategy.updatedAt} />
+        ) : (
+          <p className="text-foreground/60">No strategy yet. Keeping it secret?</p>
+        )}
       </section>
 
       <dl className="grid grid-cols-2 gap-3">
