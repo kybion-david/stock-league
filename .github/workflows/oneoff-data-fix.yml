@@ -1,0 +1,23 @@
+# One-off: inspect (and later fix) one player's trades in production.
+# Lives only on this branch; never merged.
+name: oneoff-data-fix
+on:
+  push:
+    branches: [chore/fix-gucci-trades]
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Run one-off script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx tsx scripts/oneoff-inspect.mts
