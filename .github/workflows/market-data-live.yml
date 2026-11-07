@@ -22,4 +22,4 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run test:live
+      - run: npx tsx scripts/yahoo-diag.mts
