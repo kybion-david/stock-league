@@ -4,13 +4,17 @@ import { createMarketDataClient } from "../src/lib/market-data";
 
 const SYMBOLS = ["6RJ0.DE", "ALV.DE", "MC.PA", "CFR.SW", "RKLB", "GOOGL"];
 const DAY = 86_400;
-const dates = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"];
+// The day the daily job would ingest now (the UTC date 6 hours ago), and the 4 before it.
+const jobDate = new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 10);
+const back = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) - n * DAY * 1000).toISOString().slice(0, 10);
+const dates = [4, 3, 2, 1, 0].map((n) => back(jobDate, n));
+const winStart = Date.parse(`${jobDate}T00:00:00Z`) / 1000 - DAY;
 
-console.log(`Now: ${new Date().toISOString()}`);
+console.log(`Now: ${new Date().toISOString()}  job date: ${jobDate}  Berlin: ${new Date().toLocaleString("sv-SE", { timeZone: "Europe/Berlin" })}  New York: ${new Date().toLocaleString("sv-SE", { timeZone: "America/New_York" })}`);
 for (const symbol of SYMBOLS) {
   // The same window getClose uses for 2026-11-06, then a wider one.
   for (const [label, p1, p2] of [
-    ["getClose window for 2026-11-06", Date.parse("2026-11-05T00:00:00Z") / 1000, Date.parse("2026-11-08T00:00:00Z") / 1000],
+    [`getClose window for ${jobDate}`, winStart, winStart + 3 * DAY],
     ["wide window", Date.parse("2026-10-28T00:00:00Z") / 1000, Math.floor(Date.now() / 1000) + DAY],
   ] as const) {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1d`;
