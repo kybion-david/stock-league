@@ -467,6 +467,51 @@ describe("fillGaps", () => {
     expect(calls).toEqual(["fx USD 2026-11-05"]);
   });
 
+  it("replaces closes that were carried because the provider was late, and the copies after them", async () => {
+    const alice = await addPlayer("Alice");
+    const rklb = await addInstrument("6RJ0.DE");
+    await trade(alice, "2026-11-04", "buy", rklb, "2");
+    // Each night the day's close was missing, so Wednesday's price was
+    // carried through Thursday, Friday and the weekend.
+    const late = fakeClient({ "6RJ0.DE": { "2026-11-04": "48.2" } });
+    await ingestRange(db, late.client, "2026-11-04", "2026-11-08");
+    const { client, calls } = fakeClient({
+      "6RJ0.DE": {
+        "2026-11-04": "48.2",
+        "2026-11-05": "49",
+        "2026-11-06": "45.45",
+        "2026-11-09": "53",
+      },
+    });
+
+    const reports = await fillGaps(db, client, "2026-11-09");
+
+    expect(reports.map((r) => [r.date, r.prices])).toEqual([
+      ["2026-11-05", [{ symbol: "6RJ0.DE", status: "fetched", close: "49", currency: "EUR" }]],
+      ["2026-11-06", [{ symbol: "6RJ0.DE", status: "fetched", close: "45.45", currency: "EUR" }]],
+      [
+        "2026-11-07",
+        [{ symbol: "6RJ0.DE", status: "carried", close: "45.45", currency: "EUR", from: "2026-11-06" }],
+      ],
+      [
+        "2026-11-08",
+        [{ symbol: "6RJ0.DE", status: "carried", close: "45.45", currency: "EUR", from: "2026-11-07" }],
+      ],
+    ]);
+    expect((await prices()).map((p) => `${p.date} ${p.close}`)).toEqual([
+      "2026-11-04 48.2",
+      "2026-11-05 49",
+      "2026-11-06 45.45",
+      "2026-11-07 45.45",
+      "2026-11-08 45.45",
+    ]);
+    // Wednesday differed from the day before it, so it wasn't asked for again.
+    expect(calls).not.toContain("close 6RJ0.DE 2026-11-04");
+
+    // Run again: the weekend copies are re-checked, but nothing changes.
+    expect(await fillGaps(db, client, "2026-11-09")).toEqual([]);
+  });
+
   it("reports nothing when no day is missing anything", async () => {
     const { client, calls } = fakeClient({});
     expect(await fillGaps(db, client, "2026-11-09")).toEqual([]);

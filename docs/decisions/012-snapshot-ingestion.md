@@ -64,3 +64,6 @@ never worked from the CLI: under `tsx`, the script and `ingest.ts` load two
 copies of `market-data.ts`, so `instanceof` failed and every weekend and
 holiday was reported as failed. Errors are now recognised by name too
 (`isNoDataError`).
+
+Revised on 2026-11-12 by ADR 024: `fillGaps` also re-checks stored rows
+that look carried (same close as the day before).

@@ -49,3 +49,4 @@ What gets easier, what gets harder, what we gave up.
 | 021 | [Demo season: in-memory fake game behind a build switch](021-demo-season.md) | Ended (2026-10-07) |
 | 022 | [Manual instruments: a hand-typed price in the normal snapshot table](022-manual-instruments.md) | Accepted |
 | 023 | [Production migrations through a manual workflow](023-manual-migrate-workflow.md) | Accepted |
+| 024 | [Late closes: last traded price as fallback, re-check carried rows](024-late-closes-after-midnight.md) | Accepted |

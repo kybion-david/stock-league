@@ -122,6 +122,33 @@ describe("getClose", () => {
     await expect(nullClose.getClose("AAPL", "2025-10-01")).rejects.toThrow(NoDataError);
   });
 
+  it("uses the last traded price when the candles leave out the session that just ended", async () => {
+    // Asked for Wed 2026-11-11 at 03:14 UTC (04:14 in Frankfurt): the
+    // candles stop at Tuesday, but meta has Wednesday's last trade (17:30 CET).
+    const xetra = chart(
+      {
+        symbol: "6RJ0.DE",
+        currency: "EUR",
+        instrumentType: "EQUITY",
+        exchangeTimezoneName: "Europe/Berlin",
+        priceHint: 2,
+        regularMarketPrice: 55.3800048828125,
+        regularMarketTime: 1794414600, // 2026-11-11 17:30 Berlin
+      },
+      [1794294000], // 2026-11-10 08:00 Berlin
+      [53],
+    );
+    await expect(clientWith(json(xetra)).client.getClose("6RJ0.DE", "2026-11-11")).resolves.toEqual(
+      { symbol: "6RJ0.DE", date: "2026-11-11", close: "55.38", currency: "EUR" },
+    );
+    // A candle for the day still wins, and the last trade never stands in for another day.
+    await expect(clientWith(json(xetra)).client.getClose("6RJ0.DE", "2026-11-10")).resolves
+      .toMatchObject({ close: "53" });
+    await expect(
+      clientWith(json(xetra)).client.getClose("6RJ0.DE", "2026-11-12"),
+    ).rejects.toThrow(NoDataError);
+  });
+
   it("throws UnknownSymbolError on Yahoo's 404", async () => {
     const { client } = clientWith(json(NOT_FOUND, 404));
     await expect(client.getClose("NOPE", "2025-10-01")).rejects.toThrow(UnknownSymbolError);
