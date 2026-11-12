@@ -43,7 +43,7 @@ export async function ingestDate(
   client: MarketDataClient,
   date: string,
 ): Promise<IngestReport> {
-  return ingestDay(db, client, date, false);
+  return ingestDay(db, client, date);
 }
 
 /** How many days before the run's date `fillGaps` looks back. */
@@ -51,11 +51,19 @@ export const GAP_FILL_DAYS = 7;
 
 /**
  * Fills in the price and FX rows missing on the `days` days before `date`,
- * oldest first, without touching rows already stored. A buy entered after
- * its day's run (players often enter trades the next morning, or backdate
- * them) otherwise never gets prices for the days before the next run, so it
- * counts at cost there and its first price lands as one big day change.
- * Returns a report only for days where something was missing.
+ * oldest first. A buy entered after its day's run (players often enter
+ * trades the next morning, or backdate them) otherwise never gets prices
+ * for the days before the next run, so it counts at cost there and its first
+ * price lands as one big day change.
+ *
+ * It also re-checks every stored price that equals the day before's, which
+ * is what a carried-forward row looks like. If the provider now has a close
+ * for that day it replaces the copy; otherwise the day is carried again from
+ * the (possibly just corrected) day before. Without this, a close the
+ * provider was late with stayed a copy of the day before for good, and so
+ * did every carried day after it.
+ *
+ * Returns a report only for days where something was missing or changed.
  */
 export async function fillGaps(
   db: Db,
@@ -64,30 +72,73 @@ export async function fillGaps(
   days = GAP_FILL_DAYS,
 ): Promise<IngestReport[]> {
   assertDate(date);
+  const from = addDays(date, -days);
+  const suspects = await carriedLooking(db, from, date);
   const reports: IngestReport[] = [];
-  for (let day = addDays(date, -days); day < date; day = addDays(day, 1)) {
-    const report = await ingestDay(db, client, day, true);
+  for (let day = from; day < date; day = addDays(day, 1)) {
+    const report = await ingestDay(db, client, day, suspects.get(day) ?? new Map());
     if (report.prices.length > 0 || report.fx.length > 0) reports.push(report);
   }
   return reports;
 }
 
-/** `ingestDate`, or with `onlyMissing` just the rows the day doesn't have yet. */
+/**
+ * Stored prices from `from` to before `to` whose close equals the stored
+ * close of the day before, by day: instrument id → close. Taken before
+ * anything is re-checked, so a corrected day doesn't hide the copies of it
+ * that follow.
+ */
+async function carriedLooking(
+  db: Db,
+  from: string,
+  to: string,
+): Promise<Map<string, Map<number, string>>> {
+  const rows = await db.query<{ instrument_id: number; date: string; close: string }>(
+    `select p.instrument_id, p.date, p.close
+     from price_snapshots p
+     join price_snapshots prev
+       on prev.instrument_id = p.instrument_id
+      and prev.date = p.date - 1
+      and prev.close = p.close
+     where p.date >= $1 and p.date < $2`,
+    [from, to],
+  );
+  const byDay = new Map<string, Map<number, string>>();
+  for (const r of rows) {
+    const day = byDay.get(r.date) ?? new Map<number, string>();
+    day.set(r.instrument_id, r.close);
+    byDay.set(r.date, day);
+  }
+  return byDay;
+}
+
+/**
+ * `ingestDate` when `recheck` is null. Otherwise only the rows the day
+ * doesn't have yet, plus a fresh look at the prices in `recheck`
+ * (instrument id → stored close), reported only when they change.
+ */
 async function ingestDay(
   db: Db,
   client: MarketDataClient,
   date: string,
-  onlyMissing: boolean,
+  recheck: Map<number, string> | null = null,
 ): Promise<IngestReport> {
   assertDate(date);
   const prices: PriceResult[] = [];
   const currencies = new Set<string>();
-  const stored = onlyMissing ? await storedRows(db, date) : null;
+  const stored = recheck ? await storedRows(db, date) : null;
 
   for (const instrument of await heldInstruments(db, date)) {
     const storedCurrency = stored?.prices.get(instrument.id);
+    const storedClose = recheck?.get(instrument.id);
     if (storedCurrency !== undefined) {
       if (storedCurrency !== "EUR") currencies.add(storedCurrency);
+      if (storedClose === undefined) continue;
+      // A failed re-check leaves the stored row as it was, so it isn't news.
+      const result = await ingestPrice(db, client, instrument, date);
+      if (result.status !== "failed" && Number(result.close) !== Number(storedClose)) {
+        prices.push(result);
+      }
       continue;
     }
     const result = await ingestPrice(db, client, instrument, date);

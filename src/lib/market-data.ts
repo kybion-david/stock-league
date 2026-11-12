@@ -169,11 +169,22 @@ export function createMarketDataClient(options: MarketDataOptions = {}): MarketD
       const start = Date.parse(`${date}T00:00:00Z`) / 1_000 - DAY_SECONDS;
       const result = await chart(symbol, `period1=${start}&period2=${start + 3 * DAY_SECONDS}`);
       const { meta } = result;
+      const timeZone = meta.exchangeTimezoneName ?? "UTC";
       const timestamps = result.timestamp ?? [];
-      const index = timestamps.findIndex(
-        (t) => localDate(t, meta.exchangeTimezoneName ?? "UTC") === date,
-      );
-      const close = index < 0 ? null : result.indicators?.quote?.[0]?.close?.[index];
+      const index = timestamps.findIndex((t) => localDate(t, timeZone) === date);
+      let close = index < 0 ? null : result.indicators?.quote?.[0]?.close?.[index];
+      // Once a new day has started on the exchange (the daily job runs after
+      // midnight UTC, which is already tomorrow in Europe), Yahoo's daily
+      // candles often leave out the session that just ended. Its last price
+      // is still in `meta`, stamped with that session's time, so use it.
+      if (
+        close == null &&
+        meta.regularMarketPrice != null &&
+        meta.regularMarketTime != null &&
+        localDate(meta.regularMarketTime, timeZone) === date
+      ) {
+        close = meta.regularMarketPrice;
+      }
       if (close == null) {
         throw new NoDataError(`No close for "${symbol}" on ${date}`);
       }
@@ -291,6 +302,10 @@ interface YahooChartResult {
     longName?: string;
     shortName?: string;
     priceHint?: number;
+    /** Last traded price of the latest session, in `currency`. */
+    regularMarketPrice?: number;
+    /** Epoch seconds of that last trade. */
+    regularMarketTime?: number;
   };
   timestamp?: number[];
   indicators?: { quote?: { close?: (number | null)[] }[] };

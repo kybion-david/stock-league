@@ -44,3 +44,6 @@ weren't settled by ADR 003 or the schema (ADR 008):
 - `regularMarketPrice` isn't used, so the client has no "now vs. close"
   special case. If Yahoo ever stops returning the open candle, `getClose`
   throws `NoDataError` for the current date, and the daily job will report it.
+
+Revised on 2026-11-12 by ADR 024: when the day's candle is missing,
+`getClose` uses `meta.regularMarketPrice` if `regularMarketTime` is on that day.

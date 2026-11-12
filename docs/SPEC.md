@@ -190,7 +190,10 @@ from it, never stored as the source of truth. Postgres tables, created by
   fetch, not a closed market. Rows are upserted: re-running a day updates
   it, and a failed symbol leaves its stored row alone. `fillGaps` adds
   rows still missing on the 7 days before a run's date (late-entered
-  trades, a failed day) without re-fetching stored ones.
+  trades, a failed day) and re-checks stored prices that equal the day
+  before's (a carried close the provider was late with, ADR 024); other
+  stored rows aren't re-fetched. When Yahoo's candles leave out the day,
+  `getClose` uses the last traded price if it's from that day (ADR 024).
 - **`schema_migrations`:** applied migration file names (managed by the
   migration runner).
 

@@ -1,10 +1,24 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-10-07 (ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-11-12 (stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
+- **Stale European prices fixed (2026-11-12, ADR 024):** the scheduled
+  `daily-ingest` runs start hours late (01:40–04:15 UTC), and by then
+  Yahoo's candles for Xetra, Paris and Zurich listings usually lack the
+  day, so the day before's close was carried forward and never replaced.
+  Rocket Lab (`6RJ0.DE`) showed €53.00 for 2026-11-09 to 11-11, and
+  `ALV.DE`, `ENR.DE`, `KRN.DE`, `MC.PA`, `XDWD.DE` and `CFR.SW` were hit
+  the same way. `getClose` now falls back to the last traded price of the
+  day, and `fillGaps` re-checks carried-looking rows from the last 7 days.
+  The first nightly run after the merge corrects 2026-11-05 onwards; days
+  2026-11-02 to 11-04 are correct only if the owner's manual runs of
+  2026-11-07/08 covered them (re-run `daily-ingest` with the date if not).
+  Unit-tested; not yet seen against live Yahoo (cloud sessions can't
+  reach it), so check the next `daily-ingest` log: European symbols
+  should say `ok`, not `carried`, on weekdays.
 - **Demo season ended (2026-10-07, ADR 021):** the demo PR (31) is
   reverted, so the site runs the real game on Neon again: an empty line-up
   and the kick-off countdown until players are added. Lint, typecheck,
@@ -316,6 +330,8 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
 ## Known issues
 
 - **GitHub can start a scheduled run late or skip it** under load (ADR 015).
+  In November 2026 runs started 3–6 hours late, after midnight in Europe
+  (see ADR 024 for what that did to European closes).
   Late runs still ingest the right day. A skipped or twice-failed day has
   no rows until someone runs `daily-ingest` by hand with that date
   (`docs/SPEC.md` → Commands).
