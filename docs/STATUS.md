@@ -1,10 +1,19 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-11-13 (repo public, ADR 026, ticket 023 for the owner's steps; encrypted backups; market benchmark on the leaderboard, chart and player page, ADR 025; stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-11-13 (news feed under the leaderboard with weekly recaps, ADR 027; repo public, ADR 026, ticket 023 for the owner's steps; encrypted backups; market benchmark on the leaderboard, chart and player page, ADR 025; stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
+- **News feed (2026-11-13, ADR 027):** under the leaderboard, the newest
+  three days of everyone's moves (and `/news` for all of them), plus a
+  teasing weekly recap after each Friday's prices; every finished week
+  since kick-off already has one. Computed on page load, no migration.
+  Unit-tested on PGlite; checked with Playwright at 375 px, light and dark,
+  against the standalone build on a local Postgres 16 with the dev seed
+  plus three players and synthetic prices to 2026-11-13 (no horizontal
+  scroll, no console errors). Not yet seen on the live site. The recap's
+  jokes are templates; an LLM-written one would need an API key (ADR 027).
 - **Ready to open-source (2026-11-13, ADR 026):** MIT `LICENSE`,
   `CONTRIBUTING.md` (fork + PR, own Docker or Neon dev database) and a
   README section. A scan of every commit on every branch found no

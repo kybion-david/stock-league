@@ -11,14 +11,19 @@ import {
   type LeaderboardRow,
 } from "@/lib/leaderboard";
 import { formatEuroCents } from "@/lib/money";
+import { loadNews, type NewsItem } from "@/lib/news";
+import { NewsFeed } from "@/app/_components/news";
 import { berlinToday } from "@/lib/transactions";
 import { GAME_START_DATE } from "@/lib/valuation";
 
 const STAKE_CENTS = 100_000;
+/** Days of news on the home page; the rest is on /news. */
+const HOME_NEWS_DAYS = 3;
 
 export default async function Home() {
   const today = berlinToday();
-  const board = await leaderboard(getDb(), today);
+  const [board, news] = await Promise.all([leaderboard(getDb(), today), loadNews(getDb(), today)]);
+  const latestNews = recent(news.items, HOME_NEWS_DAYS);
   // The market sits below every player worth as much or more.
   const marketValue = board.benchmark?.valueCents;
   const marketAt =
@@ -66,6 +71,18 @@ export default async function Home() {
         </section>
       )}
 
+      {latestNews.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">📰 News</h2>
+          <NewsFeed items={latestNews} />
+          {latestNews.length < news.items.length && (
+            <Link href="/news" className="text-sm text-foreground/60 underline hover:text-foreground">
+              Older news →
+            </Link>
+          )}
+        </section>
+      )}
+
       <nav className="grid grid-cols-2 gap-3">
         <Link
           href="/trades"
@@ -106,6 +123,13 @@ export default async function Home() {
       </nav>
     </main>
   );
+}
+
+/** The newest items up to and including the `days`-th day card. */
+function recent(items: readonly NewsItem[], days: number): NewsItem[] {
+  let seen = 0;
+  const end = items.findIndex((item) => item.kind === "day" && ++seen === days);
+  return end === -1 ? [...items] : items.slice(0, end + 1);
 }
 
 function KickOff({ today }: { today: string }) {
