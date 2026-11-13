@@ -16,6 +16,8 @@ export interface ChartInput {
   series: ChartSeries[];
   /** Value of the reference line (the stake), in cents. */
   baselineCents: number;
+  /** The market benchmark's value per date (ADR 025), drawn as its own grey line. */
+  market?: number[];
 }
 
 export interface Point {
@@ -53,6 +55,14 @@ export interface ChartLayout {
   yTicks: Tick[];
   baselineY: number;
   lines: ChartLine[];
+  /** The market benchmark's line, or null without one. */
+  market: MarketLine | null;
+}
+
+export interface MarketLine {
+  path: string;
+  points: Point[];
+  label: Point;
 }
 
 export const SLOT_COUNT = 8;
@@ -65,7 +75,7 @@ const MIN_SPAN_CENTS = 2_000;
 const LABEL_GAP = 15;
 
 /** Lays the chart out in a fixed 340 × 220 viewBox that scales to the screen width. */
-export function layoutChart({ dates, series, baselineCents }: ChartInput): ChartLayout {
+export function layoutChart({ dates, series, baselineCents, market }: ChartInput): ChartLayout {
   if (dates.length === 0) throw new RangeError("A chart needs at least one day");
   const { left, right, top, bottom } = PLOT;
 
@@ -73,7 +83,10 @@ export function layoutChart({ dates, series, baselineCents }: ChartInput): Chart
     dates.length === 1 ? (left + right) / 2 : left + (i * (right - left)) / (dates.length - 1),
   );
 
-  const values = series.flatMap((s) => s.values).concat(baselineCents);
+  const values = series
+    .flatMap((s) => s.values)
+    .concat(market ?? [])
+    .concat(baselineCents);
   const { min, max, step } = valueDomain(Math.min(...values), Math.max(...values));
   const y = (cents: number) => bottom - ((cents - min) / (max - min)) * (bottom - top);
 
@@ -89,18 +102,20 @@ export function layoutChart({ dates, series, baselineCents }: ChartInput): Chart
       id: s.id,
       slot: slot % SLOT_COUNT,
       dashed: slot >= SLOT_COUNT,
-      path: points.map((p, i) => `${i === 0 ? "M" : "L"}${round(p.x)} ${round(p.y)}`).join(" "),
+      path: pathThrough(points),
       points,
       label: { x: end.x + 12, y: end.y },
     };
   });
+  const marketLine = market ? lineThrough(market.map((v, i) => ({ x: xs[i], y: y(v) }))) : null;
+  const labelled = marketLine ? [...lines, marketLine] : lines;
   const spread = spreadLabels(
-    lines.map((l) => l.label.y),
+    labelled.map((l) => l.label.y),
     LABEL_GAP,
     top,
     bottom,
   );
-  lines.forEach((l, i) => (l.label.y = spread[i]));
+  labelled.forEach((l, i) => (l.label.y = spread[i]));
 
   return {
     width: WIDTH,
@@ -115,7 +130,17 @@ export function layoutChart({ dates, series, baselineCents }: ChartInput): Chart
     yTicks,
     baselineY: y(baselineCents),
     lines,
+    market: marketLine,
   };
+}
+
+function lineThrough(points: Point[]): MarketLine {
+  const end = points[points.length - 1];
+  return { path: pathThrough(points), points, label: { x: end.x + 12, y: end.y } };
+}
+
+function pathThrough(points: readonly Point[]): string {
+  return points.map((p, i) => `${i === 0 ? "M" : "L"}${round(p.x)} ${round(p.y)}`).join(" ");
 }
 
 /** A rounded value range (in cents) with a step that gives 3–6 gridlines. */

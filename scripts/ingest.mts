@@ -2,14 +2,25 @@
 //   npm run ingest                         → today's UTC date
 //   npm run ingest -- 2026-11-06           → one date
 //   npm run ingest -- 2026-11-01 2026-11-30 → a range, inclusive (backfill)
-// First fills rows still missing on the 7 days before the first date (a buy
-// entered after its day's run). Reads DATABASE_URL from the environment or
+// First adds the market benchmark's instruments if needed and fills any of
+// their days missing since kick-off (ADR 025), then fills rows still missing
+// on the 7 days before the first date (a buy entered after its day's run). Reads DATABASE_URL from the environment or
 // from .env. Every date and symbol is attempted; the exit code is 1 if
 // anything failed.
 import { existsSync } from "node:fs";
 import { connect } from "../src/lib/db/postgres";
-import { fillGaps, hasFailures, ingestRange, type IngestReport } from "../src/lib/ingest";
+import { BENCHMARK_SYMBOLS, ensureBenchmarkInstruments } from "../src/lib/benchmark";
+import {
+  fillAlways,
+  fillGaps,
+  GAP_FILL_DAYS,
+  hasFailures,
+  ingestRange,
+  type AlwaysFetch,
+  type IngestReport,
+} from "../src/lib/ingest";
 import { createMarketDataClient } from "../src/lib/market-data";
+import { GAME_START_DATE } from "../src/lib/valuation";
 
 const args = process.argv.slice(2);
 if (args.length > 2 || args.some((a) => !/^\d{4}-\d{2}-\d{2}$/.test(a))) {
@@ -31,11 +42,15 @@ if (!url) {
 const db = connect(url);
 try {
   const client = createMarketDataClient();
-  const gaps = await fillGaps(db, client, from);
+  const always: AlwaysFetch = { symbols: BENCHMARK_SYMBOLS, since: GAME_START_DATE };
+  await ensureBenchmarkInstruments(db);
+  const history = await fillAlways(db, client, from, always);
+  history.forEach((report) => print(report, " (benchmark history)"));
+  const gaps = await fillGaps(db, client, from, GAP_FILL_DAYS, always);
   gaps.forEach((report) => print(report, " (filled gap)"));
-  const reports = await ingestRange(db, client, from, to);
+  const reports = await ingestRange(db, client, from, to, always);
   reports.forEach((report) => print(report));
-  if (hasFailures([...gaps, ...reports])) {
+  if (hasFailures([...history, ...gaps, ...reports])) {
     console.error("Some snapshots failed (see above).");
     process.exitCode = 1;
   }

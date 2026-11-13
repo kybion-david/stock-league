@@ -2,13 +2,15 @@
 // gain or loss, cash, fees, dividends, value over the game and history. The
 // numbers come from the leaderboard and valuation (ADR 014), so the page
 // always agrees with the home page and the chart.
+import { benchmarkSeries, type BenchmarkStanding } from "@/lib/benchmark";
 import type { Db } from "@/lib/db/db";
 import { listInstruments } from "@/lib/instruments";
 import { formatDay, leaderboard, type LeaderboardRow } from "@/lib/leaderboard";
 import { berlinToday, listTransactions, type Transaction } from "@/lib/transactions";
 import {
   GAME_START_DATE,
-  playerSeries,
+  loadGame,
+  seriesFrom,
   type ClosedPosition,
   type HoldingValuation,
   type SeriesPoint,
@@ -42,6 +44,10 @@ export interface Portfolio {
   realizedCents: number;
   /** Daily values from 2026-11-01 to the latest day with prices; empty before then. */
   series: SeriesPoint[];
+  /** The market benchmark on the leaderboard's day (ADR 025), or null. */
+  market: BenchmarkStanding | null;
+  /** The market's daily values over the same days as `series`, or null. */
+  marketSeries: SeriesPoint[] | null;
   /** Newest first. */
   transactions: Transaction[];
 }
@@ -58,11 +64,12 @@ export async function portfolio(
 
   const { lastUpdated } = board;
   const charted = lastUpdated !== null && lastUpdated >= GAME_START_DATE;
-  const [instruments, transactions, series] = await Promise.all([
+  const [instruments, transactions, game] = await Promise.all([
     listInstruments(db),
     listTransactions(db, playerId),
-    charted ? playerSeries(db, GAME_START_DATE, lastUpdated) : Promise.resolve([]),
+    charted ? loadGame(db, lastUpdated) : Promise.resolve(null),
   ]);
+  const series = game && charted ? seriesFrom(game, GAME_START_DATE, lastUpdated) : [];
   const names = new Map(instruments.map((i) => [i.symbol, i.name]));
 
   return {
@@ -75,6 +82,8 @@ export async function portfolio(
     closed: row.closedPositions.map((c) => ({ ...c, name: names.get(c.instrument) ?? null })),
     realizedCents: realizedTotal(row.holdings, row.closedPositions),
     series: series.find((s) => s.player.id === playerId)?.points ?? [],
+    market: board.benchmark,
+    marketSeries: game && charted ? benchmarkSeries(game, GAME_START_DATE, lastUpdated) : null,
     transactions,
   };
 }

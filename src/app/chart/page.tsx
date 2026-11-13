@@ -5,7 +5,8 @@ import { getDb } from "@/lib/db/postgres";
 import { formatDay } from "@/lib/leaderboard";
 import { STARTING_CASH_CENTS } from "@/lib/ledger";
 import { formatEuroCents } from "@/lib/money";
-import { GAME_START_DATE, latestSnapshotDate, playerSeries } from "@/lib/valuation";
+import { BENCHMARK, benchmarkSeries } from "@/lib/benchmark";
+import { GAME_START_DATE, latestSnapshotDate, loadGame, seriesFrom } from "@/lib/valuation";
 import { ValueChart } from "./value-chart";
 
 export const metadata: Metadata = { title: "Chart · Stock League" };
@@ -14,7 +15,9 @@ export default async function ChartPage() {
   const db = getDb();
   const lastUpdated = await latestSnapshotDate(db);
   const started = lastUpdated !== null && lastUpdated >= GAME_START_DATE;
-  const all = started ? await playerSeries(db, GAME_START_DATE, lastUpdated) : [];
+  const game = started ? await loadGame(db, lastUpdated) : null;
+  const all = game && started ? seriesFrom(game, GAME_START_DATE, lastUpdated) : [];
+  const market = game && started ? benchmarkSeries(game, GAME_START_DATE, lastUpdated) : null;
   const dates = all[0]?.points.map((p) => p.date) ?? [];
 
   return (
@@ -37,12 +40,27 @@ export default async function ChartPage() {
           <p className="text-sm text-foreground/60">
             Everyone&apos;s value since kick-off, with prices up to{" "}
             {formatDay(lastUpdated)}. The dashed line is the{" "}
-            {formatEuroCents(STARTING_CASH_CENTS)} everyone started with.
+            {formatEuroCents(STARTING_CASH_CENTS)} everyone started with
+            {market && (
+              <>
+                , and the dotted grey line {BENCHMARK.emoji} is the same amount in the market (
+                {BENCHMARK.description})
+              </>
+            )}
+            .
           </p>
           <ValueChart
             dates={dates}
             dayLabels={dates.map(formatDay)}
             baselineCents={STARTING_CASH_CENTS}
+            market={
+              market && {
+                name: BENCHMARK.name,
+                emoji: BENCHMARK.emoji,
+                values: market.map((p) => p.valueCents),
+                stale: market.map((p) => p.stale),
+              }
+            }
             series={all.map(({ player, points }) => ({
               id: player.id,
               name: player.name,

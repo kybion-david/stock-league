@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "@/lib/db/db";
 import { migrate } from "@/lib/db/migrate";
 import { createTestDb } from "@/lib/db/pglite";
-import { addDays, fillGaps, hasFailures, ingestDate, ingestRange } from "@/lib/ingest";
+import { addDays, fillAlways, fillGaps, hasFailures, ingestDate, ingestRange } from "@/lib/ingest";
 import {
   MarketDataError,
   NoDataError,
@@ -516,5 +516,74 @@ describe("fillGaps", () => {
     const { client, calls } = fakeClient({});
     expect(await fillGaps(db, client, "2026-11-09")).toEqual([]);
     expect(calls).toEqual([]);
+  });
+});
+
+// The market benchmark (ADR 025): fetched every day from `since`, held or not.
+describe("always-fetched instruments", () => {
+  const always = { symbols: ["EUNL.DE", "IS3N.DE"], since: "2026-11-01" };
+
+  it("are ingested with nobody holding them, from their first day on", async () => {
+    await addInstrument("EUNL.DE");
+    await addInstrument("IS3N.DE");
+    await addInstrument("AAPL", "USD");
+    const { client, calls } = fakeClient({
+      "EUNL.DE": { "2026-10-30": "100", "2026-11-06": "101" },
+      "IS3N.DE": { "2026-11-06": "30" },
+    });
+
+    expect((await ingestDate(db, client, "2026-10-31", always)).prices).toEqual([]);
+    const report = await ingestDate(db, client, "2026-11-06", always);
+
+    expect(report.prices).toEqual([
+      { symbol: "EUNL.DE", status: "fetched", close: "101", currency: "EUR" },
+      { symbol: "IS3N.DE", status: "fetched", close: "30", currency: "EUR" },
+    ]);
+    expect(calls.some((c) => c.includes("AAPL"))).toBe(false);
+  });
+
+  it("fillAlways fills every missing day since the start, walking back for a Sunday start", async () => {
+    await addInstrument("EUNL.DE");
+    await addInstrument("IS3N.DE");
+    const { client } = fakeClient({
+      "EUNL.DE": { "2026-10-30": "100", "2026-11-02": "102" },
+      "IS3N.DE": { "2026-10-30": "30", "2026-11-02": "31" },
+    });
+
+    const reports = await fillAlways(db, client, "2026-11-03", always);
+
+    expect(reports.map((r) => [r.date, r.prices.map((p) => p.status)])).toEqual([
+      ["2026-11-01", ["carried", "carried"]],
+      ["2026-11-02", ["fetched", "fetched"]],
+    ]);
+    expect(await prices()).toEqual([
+      { symbol: "EUNL.DE", date: "2026-11-01", close: "100", currency: "EUR" },
+      { symbol: "IS3N.DE", date: "2026-11-01", close: "30", currency: "EUR" },
+      { symbol: "EUNL.DE", date: "2026-11-02", close: "102", currency: "EUR" },
+      { symbol: "IS3N.DE", date: "2026-11-02", close: "31", currency: "EUR" },
+    ]);
+
+    // Once complete, a second run fetches nothing.
+    const again = fakeClient({});
+    expect(await fillAlways(db, again.client, "2026-11-03", always)).toEqual([]);
+    expect(again.calls).toEqual([]);
+  });
+
+  it("fillGaps re-checks a carried-looking benchmark close", async () => {
+    const id = await addInstrument("EUNL.DE");
+    for (const [date, close] of [
+      ["2026-11-05", "100"],
+      ["2026-11-06", "100"],
+    ]) {
+      await db.query(
+        "insert into price_snapshots (instrument_id, date, close, currency) values ($1, $2, $3, 'EUR')",
+        [id, date, close],
+      );
+    }
+    const { client } = fakeClient({ "EUNL.DE": { "2026-11-06": "103" } });
+
+    await fillGaps(db, client, "2026-11-07", 2, { symbols: ["EUNL.DE"], since: "2026-11-01" });
+
+    expect((await prices()).map((p) => p.close)).toEqual(["100", "103"]);
   });
 });

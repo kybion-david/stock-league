@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Fragment } from "react";
+import { BENCHMARK, versusMarket, type BenchmarkStanding } from "@/lib/benchmark";
 import { getDb } from "@/lib/db/postgres";
 import { AWARDS, Change } from "@/app/_components/score";
 import {
@@ -17,6 +19,12 @@ const STAKE_CENTS = 100_000;
 export default async function Home() {
   const today = berlinToday();
   const board = await leaderboard(getDb(), today);
+  // The market sits below every player worth as much or more.
+  const marketValue = board.benchmark?.valueCents;
+  const marketAt =
+    marketValue === undefined
+      ? -1
+      : board.rows.filter((r) => r.valueCents >= marketValue).length;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-8">
@@ -45,9 +53,15 @@ export default async function Home() {
         <section className="flex flex-col gap-3">
           {!board.started && <h2 className="text-lg font-semibold">Line-up</h2>}
           <ol className="divide-y divide-foreground/10 overflow-hidden rounded-2xl border border-foreground/15">
-            {board.rows.map((row) => (
-              <Row key={row.player.id} row={row} started={board.started} />
+            {board.rows.map((row, i) => (
+              <Fragment key={row.player.id}>
+                {board.benchmark && i === marketAt && <MarketRow market={board.benchmark} />}
+                <Row row={row} started={board.started} market={board.benchmark} />
+              </Fragment>
             ))}
+            {board.benchmark && marketAt === board.rows.length && (
+              <MarketRow market={board.benchmark} />
+            )}
           </ol>
         </section>
       )}
@@ -112,9 +126,18 @@ function KickOff({ today }: { today: string }) {
   );
 }
 
-function Row({ row, started }: { row: LeaderboardRow; started: boolean }) {
+function Row({
+  row,
+  started,
+  market,
+}: {
+  row: LeaderboardRow;
+  started: boolean;
+  market: BenchmarkStanding | null;
+}) {
   const award = row.award ? AWARDS[row.award] : null;
   const note = priceNote(row.holdings);
+  const vs = market && versusMarket(row.valueCents, market);
   return (
     <li className={row.award === "gold" ? "bg-amber-400/10" : undefined}>
       <Link
@@ -146,10 +169,46 @@ function Row({ row, started }: { row: LeaderboardRow; started: boolean }) {
           <div className="flex flex-wrap gap-2 pl-11 text-sm">
             <Change label="Total" cents={row.returnCents} rate={row.returnRate} />
             <Change label="Day" cents={row.dayChangeCents} rate={row.dayChangeRate} />
+            {vs && <Change label={`vs ${BENCHMARK.emoji}`} cents={vs.cents} rate={vs.rate} />}
           </div>
         )}
         {note && <p className="pl-11 text-xs text-foreground/50">⏳ {note}</p>}
       </Link>
+    </li>
+  );
+}
+
+/** The 70/30 market benchmark (ADR 025): ranked by value, but not a player. */
+function MarketRow({ market }: { market: BenchmarkStanding }) {
+  const note = priceNote(market.holdings);
+  return (
+    <li
+      className="flex flex-col gap-2 border-dashed border-foreground/30 bg-foreground/[0.03] px-4 py-3 [&:not(:first-child)]:border-t-2"
+      aria-label={`${BENCHMARK.name}: ${BENCHMARK.description}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="w-8 shrink-0" aria-hidden />
+        <span className="shrink-0 text-2xl" aria-hidden>
+          {BENCHMARK.emoji}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-lg font-semibold italic text-foreground/80">
+          {BENCHMARK.name}
+        </span>
+        <span className="shrink-0 text-lg font-semibold tabular-nums text-foreground/80">
+          {formatEuroCents(market.valueCents)}
+        </span>
+        <span className="-ml-1 shrink-0 text-transparent" aria-hidden>
+          ›
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2 pl-11 text-sm">
+        <Change label="Total" cents={market.returnCents} rate={market.returnRate} />
+        <Change label="Day" cents={market.dayChangeCents} rate={market.dayChangeRate} />
+      </div>
+      <p className="pl-11 text-xs text-foreground/50">
+        {formatEuroCents(STAKE_CENTS)} put in {BENCHMARK.description} at kick-off. Not a player.
+      </p>
+      {note && <p className="pl-11 text-xs text-foreground/50">⏳ {note}</p>}
     </li>
   );
 }

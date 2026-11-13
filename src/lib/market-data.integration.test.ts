@@ -2,6 +2,7 @@
 // (`npm run test:live`); the `market-data-live` workflow runs it on a GitHub
 // Actions runner to check that Yahoo doesn't block datacenter IPs.
 import { describe, expect, it } from "vitest";
+import { BENCHMARK_SYMBOLS } from "@/lib/benchmark";
 import {
   createMarketDataClient,
   NoDataError,
@@ -25,6 +26,14 @@ describe.skipIf(!process.env.MARKET_DATA_LIVE)("market data (live)", { timeout: 
     const close = await client.getClose(symbol, DAY);
     expect(close).toMatchObject({ symbol, date: DAY, currency });
     expect(Number(close.close)).toBeGreaterThan(0);
+  });
+
+  // The market benchmark (ADR 025): EUR ETFs with a close on kick-off's Friday.
+  it.each(BENCHMARK_SYMBOLS)("gets the benchmark's %s in EUR on 2026-10-30", async (symbol) => {
+    const close = await client.getClose(symbol, "2026-10-30");
+    expect(close).toMatchObject({ symbol, currency: "EUR" });
+    expect(Number(close.close)).toBeGreaterThan(0);
+    await expect(client.lookupSymbol(symbol)).resolves.toMatchObject({ type: "etf", currency: "EUR" });
   });
 
   it("has no close on a weekend for a stock", async () => {
