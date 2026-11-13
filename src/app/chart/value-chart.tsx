@@ -1,13 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { layoutChart, nearestIndex, type ChartSeries } from "@/lib/chart";
+import { layoutChart, nearestIndex, type ChartLine, type ChartSeries } from "@/lib/chart";
 import { formatEuroCents, formatSignedPercent } from "@/lib/money";
 
 export interface ValueChartSeries extends ChartSeries {
   /** Per date: true if that day's value uses an old or missing price (ADR 014). */
   stale: boolean[];
 }
+
+export interface MarketSeries {
+  name: string;
+  emoji: string;
+  values: number[];
+  stale: boolean[];
+}
+
+const MARKET_ID = -1;
 
 /**
  * Every player's value over the game as plain SVG (ADR 018). Tap, drag or
@@ -19,16 +28,19 @@ export function ValueChart({
   dayLabels,
   series,
   baselineCents,
+  market,
 }: {
   dates: string[];
   /** A label per date for the readout, e.g. "Tue 3 Nov". */
   dayLabels: string[];
   series: ValueChartSeries[];
   baselineCents: number;
+  /** The market benchmark (ADR 025), drawn as a grey line and listed in the readout. */
+  market?: MarketSeries | null;
 }) {
   const layout = useMemo(
-    () => layoutChart({ dates, series, baselineCents }),
-    [dates, series, baselineCents],
+    () => layoutChart({ dates, series, baselineCents, market: market?.values }),
+    [dates, series, baselineCents, market],
   );
   const last = dates.length - 1;
   const [selected, setSelected] = useState(last);
@@ -47,9 +59,12 @@ export function ValueChart({
     End: () => last,
   };
 
-  const rows = series
-    .map((s, n) => ({ s, line: layout.lines[n], value: s.values[day] }))
-    .sort((a, b) => b.value - a.value || a.s.name.localeCompare(b.s.name));
+  const rows = [
+    ...series.map((s, n) => ({ s, line: layout.lines[n] as ChartLine | null, value: s.values[day] })),
+    ...(market
+      ? [{ s: { ...market, id: MARKET_ID }, line: null, value: market.values[day] }]
+      : []),
+  ].sort((a, b) => b.value - a.value || a.s.name.localeCompare(b.s.name));
 
   return (
     <div className="value-chart flex flex-col gap-3">
@@ -60,20 +75,36 @@ export function ValueChart({
         </p>
         <ul className="flex flex-col gap-1">
           {rows.map(({ s, line, value }) => (
-            <li key={s.id} className="flex min-w-0 items-center gap-2">
+            <li
+              key={s.id}
+              className={`flex min-w-0 items-center gap-2 ${line ? "" : "text-foreground/70"}`}
+            >
               <svg width="14" height="4" aria-hidden className="shrink-0">
-                <line
-                  x1="0"
-                  y1="2"
-                  x2="14"
-                  y2="2"
-                  stroke={`var(--series-${line.slot + 1})`}
-                  strokeWidth="3"
-                  strokeDasharray={line.dashed ? "4 2" : undefined}
-                />
+                {line ? (
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="14"
+                    y2="2"
+                    stroke={`var(--series-${line.slot + 1})`}
+                    strokeWidth="3"
+                    strokeDasharray={line.dashed ? "4 2" : undefined}
+                  />
+                ) : (
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="14"
+                    y2="2"
+                    strokeWidth="3"
+                    strokeDasharray="1 3"
+                    strokeLinecap="round"
+                    className="stroke-foreground/60"
+                  />
+                )}
               </svg>
               <span aria-hidden>{s.emoji ?? "🙂"}</span>
-              <span className="min-w-0 flex-1 truncate">{s.name}</span>
+              <span className={`min-w-0 flex-1 truncate ${line ? "" : "italic"}`}>{s.name}</span>
               {s.stale[day] && (
                 <span className="shrink-0" role="img" aria-label="Uses an old price">
                   ⏳
@@ -92,7 +123,7 @@ export function ValueChart({
         viewBox={`0 0 ${layout.width} ${layout.height}`}
         className="h-auto w-full touch-pan-y select-none outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
         role="img"
-        aria-label={`Value of each player from ${dayLabels[0]} to ${dayLabels[last]}. Use the arrow keys to pick a day.`}
+        aria-label={`Value of each player${market ? " and the market" : ""} from ${dayLabels[0]} to ${dayLabels[last]}. Use the arrow keys to pick a day.`}
         tabIndex={0}
         onPointerDown={pick}
         onPointerMove={(e) => (e.pointerType === "mouse" || e.buttons > 0) && pick(e)}
@@ -147,6 +178,17 @@ export function ValueChart({
           y2={plot.bottom}
           className="stroke-foreground/30"
         />
+        {layout.market && (
+          <path
+            d={layout.market.path}
+            fill="none"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray="1 4"
+            className="stroke-foreground/60"
+          />
+        )}
         {layout.lines.map((line) => (
           <path
             key={line.id}
@@ -170,6 +212,26 @@ export function ValueChart({
             className="stroke-background"
           />
         ))}
+        {layout.market && (
+          <circle
+            cx={layout.market.points[day].x}
+            cy={layout.market.points[day].y}
+            r="3"
+            strokeWidth="2"
+            className="fill-foreground/60 stroke-background"
+          />
+        )}
+        {layout.market && (
+          <text
+            x={layout.market.label.x}
+            y={layout.market.label.y}
+            dominantBaseline="middle"
+            fontSize="12"
+            aria-hidden
+          >
+            {market?.emoji}
+          </text>
+        )}
         {layout.lines.map((line, n) => (
           <text
             key={line.id}

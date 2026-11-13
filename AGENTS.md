@@ -26,7 +26,7 @@ need. If something looks under-engineered, that may be intentional — check
 | `AGENTS.md` | This file. Rules for agents. Canonical. |
 | `CLAUDE.md` | One line: imports `AGENTS.md` for Claude Code. |
 | `README.md` | Human front door. No status in here. |
-| `CONTRIBUTING.md` | How friends send changes (ADR 025). |
+| `CONTRIBUTING.md` | How friends send changes (ADR 026). |
 | `LICENSE` | MIT. |
 | `docs/SPEC.md` | **What** we're building: game rules, features, data model, tech stack, structure, conventions. |
 | `docs/STATUS.md` | **Where we are**: current state, next steps, open questions, known issues. |

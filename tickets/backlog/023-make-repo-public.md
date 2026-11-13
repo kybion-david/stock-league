@@ -5,7 +5,7 @@
 
 ## Description
 
-The repo is ready to be open-sourced (ADR 025): MIT `LICENSE`,
+The repo is ready to be open-sourced (ADR 026): MIT `LICENSE`,
 `CONTRIBUTING.md`, encrypted backups. What's left are GitHub settings only
 the owner can change, in this order. Agents can't do these steps.
 
@@ -16,7 +16,7 @@ the owner can change, in this order. Agents can't do these steps.
       password manager). A `daily-backup` run after that is green and its
       artifact is a `.dump.gpg`.
 - [x] Every older `daily-backup` artifact (plain `.dump`, made before ADR
-      025) deleted from the Actions tab, so they don't become downloadable.
+      026) deleted from the Actions tab, so they don't become downloadable.
       Done 2026-11-13: secret added, PR 38's backup run was the first
       encrypted one, and the 39 plain artifacts (2026-10-05 to 11-12) were
       deleted through the API with the owner's OK.

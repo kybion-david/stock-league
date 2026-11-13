@@ -6,6 +6,7 @@ import { AWARDS, Change, tone } from "@/app/_components/score";
 import { StrategyText } from "@/app/_components/strategy";
 import { Page } from "@/app/_components/ui";
 import { TransactionHistory } from "@/app/trades/history";
+import { BENCHMARK, versusMarket } from "@/lib/benchmark";
 import { parseId } from "@/lib/db/errors";
 import { getDb } from "@/lib/db/postgres";
 import { formatDay, priceNote } from "@/lib/leaderboard";
@@ -32,6 +33,7 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
   if (!p) notFound();
   const { row, started } = p;
   const note = priceNote(row.holdings);
+  const vs = p.market && versusMarket(row.valueCents, p.market);
 
   return (
     <Page title={`${row.player.emoji ?? "🙂"} ${row.player.name}`}>
@@ -46,7 +48,15 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
           <div className="flex flex-wrap gap-2 text-sm">
             <Change label="Total" cents={row.returnCents} rate={row.returnRate} />
             <Change label="Day" cents={row.dayChangeCents} rate={row.dayChangeRate} />
+            {vs && <Change label={`vs ${BENCHMARK.emoji}`} cents={vs.cents} rate={vs.rate} />}
           </div>
+        )}
+        {vs && p.market && (
+          <p className="text-xs text-foreground/50">
+            {vs.cents > 0 ? "Beating" : vs.cents < 0 ? "Behind" : "Level with"} the market:{" "}
+            {formatEuroCents(STARTING_CASH_CENTS)} in {BENCHMARK.description} at
+            kick-off is worth {formatEuroCents(p.market.valueCents)}.
+          </p>
         )}
         {note && <p className="text-xs text-foreground/50">⏳ {note}</p>}
       </section>
@@ -118,6 +128,14 @@ export default async function PortfolioPage({ params }: PageProps<"/portfolio/[i
             dates={p.series.map((s) => s.date)}
             dayLabels={p.series.map((s) => formatDay(s.date))}
             baselineCents={STARTING_CASH_CENTS}
+            market={
+              p.marketSeries && {
+                name: BENCHMARK.name,
+                emoji: BENCHMARK.emoji,
+                values: p.marketSeries.map((s) => s.valueCents),
+                stale: p.marketSeries.map((s) => s.stale),
+              }
+            }
             series={[
               {
                 id: row.player.id,

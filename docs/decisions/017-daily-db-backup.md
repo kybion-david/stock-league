@@ -1,6 +1,6 @@
 # 017. Daily backup: pg_dump to a workflow artifact, restore-checked every run
 
-**Status:** Accepted (artifacts encrypted since ADR 025)
+**Status:** Accepted (artifacts encrypted since ADR 026)
 **Date:** 2026-10-05
 
 ## Context
@@ -34,7 +34,7 @@ lands anywhere public.
 - **Stored as a workflow artifact** named `stock-league-YYYY-MM-DD`, kept
   for 90 days, uncompressed by the upload (the dump already is). Artifacts
   were only visible to people with access to the private repo. Since ADR
-  025 they are encrypted, because the repo is public.
+  026 they are encrypted, because the repo is public.
 
 Alternatives considered:
 

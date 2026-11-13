@@ -80,6 +80,16 @@ Confirmed with the project owner (2026-10-05):
      buy without a price yet, gets a ⏳ note. Before 2026-11-01 the page shows
      a kick-off countdown and the line-up instead. Each row opens that
      player's page (› on the right).
+   - **Market benchmark (ADR 025, `src/lib/benchmark.ts`):** "🌍 Market"
+     is €1,000 put in at kick-off as 70% developed markets (`EUNL.DE`,
+     MSCI World) and 30% emerging markets (`IS3N.DE`, MSCI EM IMI), bought
+     at the last close on or before 2026-11-01 and never rebalanced. It's
+     valued like a player. On the leaderboard it's a grey, dashed-bordered
+     row placed by value, with total and day change but no place or medal,
+     and it never changes the players' places. Each player's row and
+     player page get a "vs 🌍" chip: their value minus the market's, in €
+     and as a % of the €1,000 stake. The charts draw it as a dotted grey
+     line. Hidden until both ETFs have a price on or before kick-off.
    - **Chart (`/chart`, ADR 018):** every player's value per day from
      2026-11-01 to the latest day with prices, one coloured line per player
      with their emoji at the end, and a dashed €1,000 line. Tap, drag or use
@@ -133,7 +143,7 @@ Confirmed with the project owner (2026-10-05):
 
 Nice-to-have (not MVP): prizes/penalties display, fun badges/titles,
 notifications to a group chat, "what if everyone bought the S&P 500"
-benchmark line.
+benchmark line (done as the 70/30 market benchmark above).
 
 ## Data model
 
@@ -194,6 +204,10 @@ from it, never stored as the source of truth. Postgres tables, created by
   before's (a carried close the provider was late with, ADR 024); other
   stored rows aren't re-fetched. When Yahoo's candles leave out the day,
   `getClose` uses the last traded price if it's from that day (ADR 024).
+  The market benchmark's two ETFs (ADR 025) are fetched every day from
+  2026-11-01 whether anyone holds them or not (`AlwaysFetch`); the CLI adds
+  their instrument rows if missing, and `fillAlways` fills any of their days
+  missing since kick-off.
 - **`schema_migrations`:** applied migration file names (managed by the
   migration runner).
 
@@ -238,7 +252,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   production with `pg_dump` (from the `postgres:18` image, over Neon's
   direct host) at 03:17 UTC, restores the dump into a throwaway Postgres to
   check it, encrypts it with `gpg --symmetric` and the `BACKUP_PASSPHRASE`
-  secret (ADR 025: artifacts of a public repo are downloadable), and keeps
+  secret (ADR 026: artifacts of a public repo are downloadable), and keeps
   it as a workflow artifact for 90 days.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
@@ -257,7 +271,7 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 ## Structure
 
 One Next.js app at the repo root. The code is public under the MIT License
-(`LICENSE`); `CONTRIBUTING.md` tells friends how to send changes (ADR 025). See also the repo map in `AGENTS.md`.
+(`LICENSE`); `CONTRIBUTING.md` tells friends how to send changes (ADR 026). See also the repo map in `AGENTS.md`.
 Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
 the main checkout; see `AGENTS.md` → Session workflow.
 
@@ -300,13 +314,14 @@ the main checkout; see `AGENTS.md` → Session workflow.
   (`transactions.ts`: list, create, edit, delete, position, amount
   parsing), snapshot ingestion (`ingest.ts`), and valuation
   (`valuation.ts`: `standings` for one day, `playerSeries` for a range,
-  `latestSnapshotDate`; `loadGame` + `standingsFrom` to value several ways
+  `latestSnapshotDate`; `loadGame` + `standingsFrom` / `seriesFrom` to value several ways
   from one load; pure `valuePlayer` / `valueSeries` underneath),
   the leaderboard (`leaderboard.ts`: day to show, places, awards,
   old-price notes, day formatting), chart layout (`chart.ts`: scales,
   ticks, line paths, end labels, colour slots), the player page's data
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
-  series and history), player strategies (`strategy.ts`), and fun stats (`stats.ts`: `funStats` plus a pure
+  series and history), player strategies (`strategy.ts`), the 70/30 market benchmark
+  (`benchmark.ts`: its ETFs, ledger, standing, series and "vs market"), and fun stats (`stats.ts`: `funStats` plus a pure
   function per stat).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
@@ -315,11 +330,12 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `db/migrations/`: numbered SQL migrations (`NNN_name.sql`). Never edit
   one that has been merged; add a new file instead.
 - `scripts/`: standalone Node scripts. `db.mts` is the database CLI;
-  `ingest.mts` is the snapshot ingestion CLI.
+  `ingest.mts` is the snapshot ingestion CLI (it also adds and backfills
+  the market benchmark's ETFs, ADR 025).
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
   Azure SWA), `daily-ingest.yml` (the daily job, ADR 015),
-  `daily-backup.yml` (daily encrypted database backup, ADRs 017, 025), `db-migrate.yml`
+  `daily-backup.yml` (daily encrypted database backup, ADRs 017, 026), `db-migrate.yml`
   (apply migrations to production, started by hand, ADR 023), `docs-check.yml`,
   and `market-data-live.yml` (live market-data test on a runner; runs on
   demand and on PRs that touch `src/lib/market-data*.ts`).
@@ -350,8 +366,9 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   today's **UTC** date. `npm run ingest -- 2026-11-06` does one date, and
   `npm run ingest -- 2026-11-01 2026-11-30` backfills a range (inclusive).
   Safe to re-run. Every symbol is attempted, and the exit code is 1 if any
-  failed (ADR 012). Before the first date it fills rows still missing on
-  the 7 days before it.
+  failed (ADR 012). Before the first date it adds the market benchmark's
+  ETFs if needed and fills their days missing since 2026-11-01 (ADR 025),
+  then fills rows still missing on the 7 days before it.
 - **Run the daily job by hand** (to redo or fill a day in production):
   `gh workflow run daily-ingest -f date=2026-11-06`, or *Run workflow* on
   the Actions tab. Without a date it ingests the UTC date 6 hours ago, so
@@ -370,7 +387,7 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   download the `stock-league-YYYY-MM-DD` artifact, or
   `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump.gpg`.
   Decrypt it with `gpg --decrypt --output stock-league-YYYY-MM-DD.dump
-  stock-league-YYYY-MM-DD.dump.gpg` and the `BACKUP_PASSPHRASE` (ADR 025).
+  stock-league-YYYY-MM-DD.dump.gpg` and the `BACKUP_PASSPHRASE` (ADR 026).
 - **Restore** needs `pg_restore` 18 or newer. Without a local install, run
   it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:18 pg_restore …`.
   Use Neon's **direct** connection string (the host without `-pooler`).
@@ -422,7 +439,7 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   or any local Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.
 - `BACKUP_PASSPHRASE` (GitHub secret only, not an app variable): encrypts
-  the daily backups (ADR 025). Keep a copy outside GitHub; without it no
+  the daily backups (ADR 026). Keep a copy outside GitHub; without it no
   backup can be restored.
 
 Market data needs no env vars: both sources are keyless (ADR 003).

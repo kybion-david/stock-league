@@ -1,4 +1,4 @@
-# 025. Open-source the code, keep the game private
+# 026. Open-source the code, keep the game private
 
 **Status:** Accepted
 **Date:** 2026-11-13

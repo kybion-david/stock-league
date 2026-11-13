@@ -458,7 +458,11 @@ export function standingsFrom({ players, ledgers, book }: GameData, date: string
 
 /** Every player's daily values from `from` to `to` inclusive, by name. */
 export async function playerSeries(db: Db, from: string, to: string): Promise<PlayerSeries[]> {
-  const { players, ledgers, book } = await loadGame(db, to);
+  return seriesFrom(await loadGame(db, to), from, to);
+}
+
+/** `playerSeries` on data already loaded up to at least `to`. */
+export function seriesFrom({ players, ledgers, book }: GameData, from: string, to: string): PlayerSeries[] {
   return players.map((player) => ({
     player,
     points: valueSeries(ledgers.get(player.id) ?? [], from, to, book),

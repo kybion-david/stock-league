@@ -2,7 +2,7 @@
 # Dumps production with pg_dump, restores the dump into a throwaway Postgres
 # to prove it's usable, encrypts it with the BACKUP_PASSPHRASE secret, and
 # keeps it as a workflow artifact for 90 days. Encrypted because artifacts of
-# a public repo can be downloaded by anyone (ADR 025).
+# a public repo can be downloaded by anyone (ADR 026).
 # Restore steps: docs/SPEC.md → Commands. Also runs on PRs that edit this file,
 # so a change is tested against the real database before it's merged.
 name: daily-backup
@@ -55,7 +55,7 @@ jobs:
         run: |
           # Fail before touching the database if the dump couldn't be encrypted.
           if [ -z "$BACKUP_PASSPHRASE" ]; then
-            echo "::error::The BACKUP_PASSPHRASE secret is not set (ADR 025)."
+            echo "::error::The BACKUP_PASSPHRASE secret is not set (ADR 026)."
             exit 1
           fi
           name="stock-league-$(date -u +%F)"
