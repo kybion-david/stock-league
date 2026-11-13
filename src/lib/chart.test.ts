@@ -130,3 +130,26 @@ describe("layoutChart", () => {
     expect(() => layoutChart({ dates: [], series: [], baselineCents: 100_000 })).toThrow(RangeError);
   });
 });
+
+describe("layoutChart with a market line", () => {
+  it("draws it, fits it in the value range and spreads its label with the players'", () => {
+    const layout = layoutChart({
+      dates: ["2026-11-01", "2026-11-02"],
+      series: [{ id: 1, name: "A", emoji: null, values: [100_000, 101_000] }],
+      baselineCents: 100_000,
+      market: [100_000, 101_000],
+    });
+    expect(layout.market?.points).toHaveLength(2);
+    expect(layout.market?.path.startsWith("M")).toBe(true);
+    expect(Math.abs((layout.market?.label.y ?? 0) - layout.lines[0].label.y)).toBeGreaterThanOrEqual(15);
+
+    const high = layoutChart({
+      dates: ["2026-11-01", "2026-11-02"],
+      series: [{ id: 1, name: "A", emoji: null, values: [100_000, 100_000] }],
+      baselineCents: 100_000,
+      market: [100_000, 120_000],
+    });
+    expect(high.yTicks.at(-1)?.label).toBe("€1,200");
+    expect(layoutChart({ dates: ["2026-11-01"], series: [], baselineCents: 100_000 }).market).toBeNull();
+  });
+});

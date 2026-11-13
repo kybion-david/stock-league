@@ -19,6 +19,15 @@ export type FxResult =
   | { currency: string; status: "fetched"; unitsPerEur: string; from: string }
   | { currency: string; status: "failed"; error: string };
 
+/**
+ * Instruments to fetch every day from `since` on, whether anyone holds them
+ * or not: the market benchmark (ADR 025). They must exist in `instruments`.
+ */
+export interface AlwaysFetch {
+  symbols: readonly string[];
+  since: string;
+}
+
 export interface IngestReport {
   date: string;
   prices: PriceResult[];
@@ -42,8 +51,9 @@ export async function ingestDate(
   db: Db,
   client: MarketDataClient,
   date: string,
+  always?: AlwaysFetch,
 ): Promise<IngestReport> {
-  return ingestDay(db, client, date);
+  return ingestDay(db, client, date, null, always);
 }
 
 /** How many days before the run's date `fillGaps` looks back. */
@@ -70,14 +80,44 @@ export async function fillGaps(
   client: MarketDataClient,
   date: string,
   days = GAP_FILL_DAYS,
+  always?: AlwaysFetch,
 ): Promise<IngestReport[]> {
   assertDate(date);
   const from = addDays(date, -days);
   const suspects = await carriedLooking(db, from, date);
   const reports: IngestReport[] = [];
   for (let day = from; day < date; day = addDays(day, 1)) {
-    const report = await ingestDay(db, client, day, suspects.get(day) ?? new Map());
+    const report = await ingestDay(db, client, day, suspects.get(day) ?? new Map(), always);
     if (report.prices.length > 0 || report.fx.length > 0) reports.push(report);
+  }
+  return reports;
+}
+
+/**
+ * Fills the rows the always-fetched instruments are missing on any day from
+ * `always.since` to before `date`, oldest first, so the benchmark has its
+ * whole history even though it was added mid-game (ADR 025). Days that are
+ * complete cost one query and no fetch. Reports only days with something
+ * missing.
+ */
+export async function fillAlways(
+  db: Db,
+  client: MarketDataClient,
+  date: string,
+  always: AlwaysFetch,
+): Promise<IngestReport[]> {
+  assertDate(date);
+  assertDate(always.since);
+  const instruments = await instrumentsBySymbol(db, always.symbols);
+  const reports: IngestReport[] = [];
+  for (let day = always.since; day < date; day = addDays(day, 1)) {
+    const stored = await storedRows(db, day);
+    const prices: PriceResult[] = [];
+    for (const instrument of instruments) {
+      if (stored.prices.has(instrument.id)) continue;
+      prices.push(await ingestPrice(db, client, instrument, day));
+    }
+    if (prices.length > 0) reports.push({ date: day, prices, fx: [] });
   }
   return reports;
 }
@@ -122,13 +162,14 @@ async function ingestDay(
   client: MarketDataClient,
   date: string,
   recheck: Map<number, string> | null = null,
+  always?: AlwaysFetch,
 ): Promise<IngestReport> {
   assertDate(date);
   const prices: PriceResult[] = [];
   const currencies = new Set<string>();
   const stored = recheck ? await storedRows(db, date) : null;
 
-  for (const instrument of await heldInstruments(db, date)) {
+  for (const instrument of await heldInstruments(db, date, always)) {
     const storedCurrency = stored?.prices.get(instrument.id);
     const storedClose = recheck?.get(instrument.id);
     if (storedCurrency !== undefined) {
@@ -174,6 +215,7 @@ export async function ingestRange(
   client: MarketDataClient,
   from: string,
   to: string,
+  always?: AlwaysFetch,
 ): Promise<IngestReport[]> {
   assertDate(from);
   assertDate(to);
@@ -181,7 +223,7 @@ export async function ingestRange(
   const reports: IngestReport[] = [];
   // Oldest first, so each day can carry forward from the one before.
   for (let day = from; day <= to; day = addDays(day, 1)) {
-    reports.push(await ingestDate(db, client, day));
+    reports.push(await ingestDate(db, client, day, always));
   }
   return reports;
 }
@@ -210,8 +252,15 @@ interface Instrument {
   symbol: string;
 }
 
-/** Instruments with a market price that any player holds shares of at the end of `date`. */
-async function heldInstruments(db: Db, date: string): Promise<Instrument[]> {
+/**
+ * Instruments with a market price that any player holds shares of at the
+ * end of `date`, plus the always-fetched ones from their first day on.
+ */
+async function heldInstruments(
+  db: Db,
+  date: string,
+  always?: AlwaysFetch,
+): Promise<Instrument[]> {
   const rows = await db.query<{
     id: number;
     player_id: number;
@@ -244,12 +293,22 @@ async function heldInstruments(db: Db, date: string): Promise<Instrument[]> {
       if (!shares.startsWith("-")) held.add(Number(id));
     }
   }
-  if (held.size === 0) return [];
+  const extra = new Set(always && date >= always.since ? always.symbols : []);
+  if (held.size === 0 && extra.size === 0) return [];
   // Manual instruments (ADR 022) have no market price: players type their value in.
   const all = await db.query<Instrument>(
     "select id, symbol from instruments where type <> 'manual' order by symbol",
   );
-  return all.filter((i) => held.has(i.id));
+  return all.filter((i) => held.has(i.id) || extra.has(i.symbol));
+}
+
+/** The instruments with these symbols that exist, by symbol. */
+async function instrumentsBySymbol(db: Db, symbols: readonly string[]): Promise<Instrument[]> {
+  if (symbols.length === 0) return [];
+  return db.query<Instrument>(
+    "select id, symbol from instruments where symbol = any($1) and type <> 'manual' order by symbol",
+    [[...symbols]],
+  );
 }
 
 async function ingestPrice(

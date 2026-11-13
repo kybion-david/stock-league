@@ -1,12 +1,14 @@
 // Leaderboard (ticket 014): the home page ranking. Picks the day to show,
 // gives tied players the same place, hands out medals and says when a
 // player's value uses old prices. The numbers come from valuation (ADR 014).
+import { benchmarkStanding, type BenchmarkStanding } from "@/lib/benchmark";
 import type { Db } from "@/lib/db/db";
 import { berlinToday } from "@/lib/transactions";
 import {
   GAME_START_DATE,
   latestSnapshotDate,
-  standings,
+  loadGame,
+  standingsFrom,
   type HoldingValuation,
   type PlayerStanding,
 } from "@/lib/valuation";
@@ -28,6 +30,8 @@ export interface Leaderboard {
   /** True once `date` is on or after the first game day. */
   started: boolean;
   rows: LeaderboardRow[];
+  /** The 70/30 market benchmark on `date` (ADR 025); null before kick-off or its first prices. */
+  benchmark: BenchmarkStanding | null;
 }
 
 /**
@@ -67,7 +71,14 @@ export async function leaderboard(db: Db, today = berlinToday()): Promise<Leader
   const lastUpdated = await latestSnapshotDate(db);
   const date = leaderboardDate(lastUpdated, today);
   const started = date >= GAME_START_DATE;
-  return { date, lastUpdated, started, rows: rankStandings(await standings(db, date), started) };
+  const game = await loadGame(db, date);
+  return {
+    date,
+    lastUpdated,
+    started,
+    rows: rankStandings(standingsFrom(game, date), started),
+    benchmark: started ? benchmarkStanding(game, date) : null,
+  };
 }
 
 /**
