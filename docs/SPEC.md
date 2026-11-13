@@ -237,7 +237,9 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 - **Backups (ADR 017):** `.github/workflows/daily-backup.yml` dumps
   production with `pg_dump` (from the `postgres:18` image, over Neon's
   direct host) at 03:17 UTC, restores the dump into a throwaway Postgres to
-  check it, and keeps it as a workflow artifact for 90 days.
+  check it, encrypts it with `gpg --symmetric` and the `BACKUP_PASSPHRASE`
+  secret (ADR 025: artifacts of a public repo are downloadable), and keeps
+  it as a workflow artifact for 90 days.
 - **Auth (ADR 006):** a shared-password gate built into the app, because
   SWA's built-in password protection isn't on the Free plan. `src/proxy.ts`
   guards every page and API route. `/login` sets a 90-day cookie signed with
@@ -254,7 +256,8 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
 
 ## Structure
 
-One Next.js app at the repo root. See also the repo map in `AGENTS.md`.
+One Next.js app at the repo root. The code is public under the MIT License
+(`LICENSE`); `CONTRIBUTING.md` tells friends how to send changes (ADR 025). See also the repo map in `AGENTS.md`.
 Work happens in sibling git worktrees (`../stock-league-<slug>`), never in
 the main checkout; see `AGENTS.md` → Session workflow.
 
@@ -316,7 +319,7 @@ the main checkout; see `AGENTS.md` → Session workflow.
   `copy-standalone-assets.mjs` is part of `npm run build` (ADR 009).
 - `.github/workflows/`: `ci.yml` (checks), `deploy.yml` (deploy `main` to
   Azure SWA), `daily-ingest.yml` (the daily job, ADR 015),
-  `daily-backup.yml` (daily database backup, ADR 017), `db-migrate.yml`
+  `daily-backup.yml` (daily encrypted database backup, ADRs 017, 025), `db-migrate.yml`
   (apply migrations to production, started by hand, ADR 023), `docs-check.yml`,
   and `market-data-live.yml` (live market-data test on a runner; runs on
   demand and on PRs that touch `src/lib/market-data*.ts`).
@@ -365,7 +368,9 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
   Actions tab. Each run's summary lists the row count of every table.
 - **Download a backup:** open a `daily-backup` run in the Actions tab and
   download the `stock-league-YYYY-MM-DD` artifact, or
-  `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump`.
+  `gh run download <run-id>`. Both unzip to `stock-league-YYYY-MM-DD.dump.gpg`.
+  Decrypt it with `gpg --decrypt --output stock-league-YYYY-MM-DD.dump
+  stock-league-YYYY-MM-DD.dump.gpg` and the `BACKUP_PASSPHRASE` (ADR 025).
 - **Restore** needs `pg_restore` 18 or newer. Without a local install, run
   it as `docker run --rm -it -v "$PWD:/work" -w /work postgres:18 pg_restore …`.
   Use Neon's **direct** connection string (the host without `-pooler`).
@@ -416,6 +421,9 @@ Env vars are listed in `.env.example`. Document each one here once it's in use.
   can't handle). For local development, use a separate Neon branch (free)
   or any local Postgres, never the production database. The app reads it lazily via
   `getDb()`, so builds and tests don't need it.
+- `BACKUP_PASSPHRASE` (GitHub secret only, not an app variable): encrypts
+  the daily backups (ADR 025). Keep a copy outside GitHub; without it no
+  backup can be restored.
 
 Market data needs no env vars: both sources are keyless (ADR 003).
 

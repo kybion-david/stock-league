@@ -1,10 +1,18 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-11-12 (stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-11-13 (repo prepared for going public, ADR 025, ticket 023 for the owner's steps; encrypted backups; stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
+- **Ready to open-source (2026-11-13, ADR 025):** MIT `LICENSE`,
+  `CONTRIBUTING.md` (fork + PR, own Docker or Neon dev database) and a
+  README section. A scan of every commit on every branch found no
+  secrets. `daily-backup` now encrypts each dump with the
+  `BACKUP_PASSPHRASE` secret before upload and **fails until that secret
+  exists**. The repo is still private: ticket 023 lists the owner's
+  GitHub-settings steps (secret, delete old plain backups, history
+  decision, branch protection, visibility).
 - **Stale European prices fixed (2026-11-12, ADR 024):** the scheduled
   `daily-ingest` runs start hours late (01:40–04:15 UTC), and by then
   Yahoo's candles for Xetra, Paris and Zurich listings usually lack the
@@ -281,7 +289,9 @@ accumulates either way, as long as daily snapshots are being stored from day one
 ## Next up
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
-lowest number whose dependencies are done. 001–017, 019, 020 and 022 are done.
+lowest number whose dependencies are done. 001–017, 019, 020 and 022 are done. 023 is owner-only.
+**Owner: ticket 023** (make the repo public); `daily-backup` is red
+until `BACKUP_PASSPHRASE` is set.
 **First: finish ticket 021.** The demo is reverted and deployed, and
 production has every migration (2026-10-07). Left: the owner migrates the
 `dev` branch locally (`npm run db:migrate` with the dev `DATABASE_URL`;
@@ -294,7 +304,8 @@ that someone holds, so those are the first runs that really fetch prices.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
-  (production pooled string).
+  (production pooled string). `BACKUP_PASSPHRASE` (ADR 025) is still to
+  be added by the owner (ticket 023).
 - SWA app settings on `swa-stock-league`: `SITE_PASSWORD` (the real shared
   password) and `DATABASE_URL` (production). Change one with
   `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league
