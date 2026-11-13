@@ -20,7 +20,7 @@ the owner can change, in this order. Agents can't do these steps.
       Done 2026-11-13: secret added, PR 38's backup run was the first
       encrypted one, and the 39 plain artifacts (2026-10-05 to 11-12) were
       deleted through the API with the owner's OK.
-- [ ] Owner decided on the git history: it shows the owner's commit email
+- [x] Owner decided on the git history: it shows the owner's commit email
       and the live site URL. Either accept that, or rewrite history first
       (needs a force-push to every branch, and every clone and open PR
       breaks). No secrets were found in history on 2026-11-13.
@@ -30,6 +30,6 @@ the owner can change, in this order. Agents can't do these steps.
       own PRs (`AGENTS.md`).
 - [ ] Actions → General → "Require approval for first-time contributors"
       (the default) kept on, so fork PRs don't run CI until approved.
-- [ ] Visibility switched to public (Settings → General → Danger Zone).
+- [x] Visibility switched to public (Settings → General → Danger Zone).
 - [ ] Friends know how to contribute (`CONTRIBUTING.md`).
 - [ ] `docs/STATUS.md` updated: the repo is public; ticket moved to `done/`.
