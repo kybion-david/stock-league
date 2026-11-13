@@ -26,11 +26,13 @@ need. If something looks under-engineered, that may be intentional — check
 | `AGENTS.md` | This file. Rules for agents. Canonical. |
 | `CLAUDE.md` | One line: imports `AGENTS.md` for Claude Code. |
 | `README.md` | Human front door. No status in here. |
+| `CONTRIBUTING.md` | How friends send changes (ADR 026). |
+| `LICENSE` | MIT. |
 | `docs/SPEC.md` | **What** we're building: game rules, features, data model, tech stack, structure, conventions. |
 | `docs/STATUS.md` | **Where we are**: current state, next steps, open questions, known issues. |
 | `docs/decisions/` | **Why**: numbered ADRs (`NNN-slug.md`). See `docs/decisions/README.md`. |
 | `tickets/` | Work items. `backlog/` = open, `done/` = finished. Format: `tickets/TEMPLATE.md`. |
-| `.github/` | PR template and workflows (`ci` = lint/typecheck/test/build, `deploy` = deploy `main` to Azure, `daily-ingest` = daily snapshots at 22:30 UTC, `daily-backup` = database dump at 03:17 UTC, `db-migrate` = apply migrations to production by hand, `docs-check`, `market-data-live`). |
+| `.github/` | PR template and workflows (`ci` = lint/typecheck/test/build, `deploy` = deploy `main` to Azure, `daily-ingest` = daily snapshots at 22:30 UTC, `daily-backup` = encrypted database dump at 03:17 UTC, `db-migrate` = apply migrations to production by hand, `docs-check`, `market-data-live`). |
 | `.claude/` | Claude Code hooks: read the spec before editing, and edit only inside a worktree. |
 | `src/app/` | Next.js App Router pages and layouts. `src/app/_components/` holds shared components. |
 | `src/lib/` | Plain TypeScript logic (no React), with `*.test.ts` files next to the code. `src/lib/db/` holds the database client, migration runner and seed (ADR 008). |
