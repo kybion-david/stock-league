@@ -305,7 +305,7 @@ that someone holds, so those are the first runs that really fetch prices.
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
   (production pooled string), and `BACKUP_PASSPHRASE` (ADR 025, added
-  2026-11-13; the owner keeps a copy outside GitHub).
+  2026-11-13; keep a copy outside GitHub).
 - SWA app settings on `swa-stock-league`: `SITE_PASSWORD` (the real shared
   password) and `DATABASE_URL` (production). Change one with
   `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league
