@@ -9,10 +9,11 @@ session; update at the end of every change. Last updated: 2026-11-13 (repo prepa
   `CONTRIBUTING.md` (fork + PR, own Docker or Neon dev database) and a
   README section. A scan of every commit on every branch found no
   secrets. `daily-backup` now encrypts each dump with the
-  `BACKUP_PASSPHRASE` secret before upload and **fails until that secret
-  exists**. The repo is still private: ticket 023 lists the owner's
-  GitHub-settings steps (secret, delete old plain backups, history
-  decision, branch protection, visibility).
+  `BACKUP_PASSPHRASE` secret (added 2026-11-13) before upload, and fails
+  if the secret is missing. The 39 older plain backups were deleted on
+  2026-11-13, so the only backups are encrypted ones from that day on.
+  The repo is still private: ticket 023 lists the owner's remaining
+  GitHub-settings steps (history decision, branch protection, visibility).
 - **Stale European prices fixed (2026-11-12, ADR 024):** the scheduled
   `daily-ingest` runs start hours late (01:40–04:15 UTC), and by then
   Yahoo's candles for Xetra, Paris and Zurich listings usually lack the
@@ -290,8 +291,7 @@ accumulates either way, as long as daily snapshots are being stored from day one
 
 Tickets live in `tickets/backlog/`, each sized for one AI session. Do the
 lowest number whose dependencies are done. 001–017, 019, 020 and 022 are done. 023 is owner-only.
-**Owner: ticket 023** (make the repo public); `daily-backup` is red
-until `BACKUP_PASSPHRASE` is set.
+**Owner: ticket 023** (make the repo public).
 **First: finish ticket 021.** The demo is reverted and deployed, and
 production has every migration (2026-10-07). Left: the owner migrates the
 `dev` branch locally (`npm run db:migrate` with the dev `DATABASE_URL`;
@@ -304,8 +304,8 @@ that someone holds, so those are the first runs that really fetch prices.
 
 **Secrets in place (2026-10-05):**
 - GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN` and `DATABASE_URL`
-  (production pooled string). `BACKUP_PASSPHRASE` (ADR 025) is still to
-  be added by the owner (ticket 023).
+  (production pooled string), and `BACKUP_PASSPHRASE` (ADR 025, added
+  2026-11-13; the owner keeps a copy outside GitHub).
 - SWA app settings on `swa-stock-league`: `SITE_PASSWORD` (the real shared
   password) and `DATABASE_URL` (production). Change one with
   `az staticwebapp appsettings set -n swa-stock-league -g rg-stock-league

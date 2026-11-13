@@ -11,12 +11,15 @@ the owner can change, in this order. Agents can't do these steps.
 
 ## Acceptance criteria
 
-- [ ] `BACKUP_PASSPHRASE` added as a repo secret (Settings → Secrets and
+- [x] `BACKUP_PASSPHRASE` added as a repo secret (Settings → Secrets and
       variables → Actions), and also kept somewhere outside GitHub (a
       password manager). A `daily-backup` run after that is green and its
       artifact is a `.dump.gpg`.
-- [ ] Every older `daily-backup` artifact (plain `.dump`, made before ADR
+- [x] Every older `daily-backup` artifact (plain `.dump`, made before ADR
       025) deleted from the Actions tab, so they don't become downloadable.
+      Done 2026-11-13: secret added, PR 38's backup run was the first
+      encrypted one, and the 39 plain artifacts (2026-10-05 to 11-12) were
+      deleted through the API with the owner's OK.
 - [ ] Owner decided on the git history: it shows the owner's commit email
       and the live site URL. Either accept that, or rewrite history first
       (needs a force-push to every branch, and every clone and open PR
