@@ -156,7 +156,7 @@ export function feeLeader(rows: readonly PlayerStanding[]): FeeLeader | null {
 }
 
 /** An instrument's last known price in EUR on a day, or null if unknown. */
-function eurPrice(book: PriceBook, instrument: string, date: string): number | null {
+export function eurPrice(book: PriceBook, instrument: string, date: string): number | null {
   const price = book.close(instrument, date);
   if (!price) return null;
   if (price.currency === "EUR") return Number(price.close);

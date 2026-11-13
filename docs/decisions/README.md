@@ -52,3 +52,4 @@ What gets easier, what gets harder, what we gave up.
 | 024 | [Late closes: last traded price as fallback, re-check carried rows](024-late-closes-after-midnight.md) | Accepted |
 | 025 | [Market benchmark: a 70/30 ETF pair valued like a player](025-market-benchmark.md) | Accepted |
 | 026 | [Open-source the code, keep the game private](026-open-source-repo.md) | Accepted |
+| 027 | [News feed: computed on page load, weekly recap from templates](027-news-feed.md) | Accepted |

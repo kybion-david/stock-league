@@ -90,6 +90,20 @@ Confirmed with the project owner (2026-10-05):
      player page get a "vs 🌍" chip: their value minus the market's, in €
      and as a % of the €1,000 stake. The charts draw it as a dotted grey
      line. Hidden until both ETFs have a price on or before kick-off.
+   - **News (ADR 027, `src/lib/news.ts`):** under the leaderboard, the
+     newest three game days (and any weekly recap among them), with "Older
+     news →" to `/news`, which shows every day since kick-off, newest
+     first. A day is listed when anyone's value moved or anyone entered a
+     transaction. Each day lists every player, biggest gain first: day
+     change in € and %, places won or lost (once someone is ahead of
+     someone), the day's buys, sells, fees and dividends, and up to two
+     holdings whose EUR price moved 3% or more; the header shows the 🌍
+     market's day. After each Friday's prices (weeks run Saturday to
+     Friday; the first from 2026-11-01 to 2026-11-06) a **weekly recap**
+     comes first: a few teasing template sentences on the leader, the
+     week's best and worst, who lost to the market, the wooden spoon,
+     places, the hottest and coldest pick, overtrading, idle cash and fees.
+     Computed when the page loads; nothing is stored.
    - **Chart (`/chart`, ADR 018):** every player's value per day from
      2026-11-01 to the latest day with prices, one coloured line per player
      with their emoji at the end, and a dashed €1,000 line. Tap, drag or use
@@ -305,6 +319,8 @@ the main checkout; see `AGENTS.md` → Session workflow.
 - `src/app/strategies/`: everyone's strategies. The text block both pages
   use is `src/app/_components/strategy.tsx`.
 - `src/app/stats/`: the fun stats page.
+- `src/app/news/`: the whole news feed. The feed component the home page
+  also uses is `src/app/_components/news.tsx`.
 - `src/lib/`: framework-free TypeScript, unit-tested with Vitest. Now:
   money and signed gain/percent formatting (`money.ts`), ledger replay/validation (`ledger.ts`),
   the market-data client (`market-data.ts`), player and instrument data
@@ -321,8 +337,9 @@ the main checkout; see `AGENTS.md` → Session workflow.
   ticks, line paths, end labels, colour slots), the player page's data
   (`portfolio.ts`: one player's leaderboard row, holdings, sold positions,
   series and history), player strategies (`strategy.ts`), the 70/30 market benchmark
-  (`benchmark.ts`: its ETFs, ledger, standing, series and "vs market"), and fun stats (`stats.ts`: `funStats` plus a pure
-  function per stat).
+  (`benchmark.ts`: its ETFs, ledger, standing, series and "vs market"), fun stats (`stats.ts`: `funStats` plus a pure
+  function per stat), and the news feed (`news.ts`: `loadNews`, the pure
+  `buildNews` and `recapLines`).
 - `src/lib/db/`: the `Db` interface (`db.ts`), the postgres.js client
   (`postgres.ts`, with `getDb()` for the app), the PGlite test client
   (`pglite.ts`), the migration runner, the dev seed, and `errors.ts`
