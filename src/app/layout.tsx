@@ -13,13 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 // Render every page per request and never prerender. A prerendered page is
-// cached at Azure SWA's edge (s-maxage of a year) and then served to anyone,
-// without running the password gate in src/proxy.ts (ADR 006).
+// cached at Azure SWA's edge (s-maxage of a year) and served from there
+// without running the app, so it would never show new prices or trades
+// (ADR 006, ADR 028).
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Stock League",
-  description: "A private investment game among friends.",
+  description: "An investment game among friends.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
