@@ -1,5 +1,5 @@
 // Player strategies (ticket 022): a short free-text note on how a player
-// invests, written by anyone with the shared password, like everything else.
+// invests, written by anyone with the league password, like everything else.
 import type { Db } from "@/lib/db/db";
 import { InputError } from "@/lib/db/errors";
 

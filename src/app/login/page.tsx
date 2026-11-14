@@ -17,6 +17,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         🔒
       </div>
       <h1 className="text-3xl font-bold tracking-tight">Stock League</h1>
+      <p className="text-foreground/60">
+        Anyone can look around. Enter the league password to add or change trades,
+        players, instruments and strategies.
+      </p>
       <form action={login} className="flex flex-col gap-4">
         <input type="hidden" name="next" value={safeNextPath(next)} />
         <label className="flex flex-col gap-2">

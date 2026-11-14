@@ -1,10 +1,17 @@
 # Status
 
 **Single source of truth for current state.** Read at the start of every
-session; update at the end of every change. Last updated: 2026-11-13 (news feed under the leaderboard with weekly recaps, ADR 027; repo public, ADR 026, ticket 023 for the owner's steps; encrypted backups; market benchmark on the leaderboard, chart and player page, ADR 025; stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
+session; update at the end of every change. Last updated: 2026-11-14 (site public to view, password only for changes, ADR 028; news feed under the leaderboard with weekly recaps, ADR 027; repo public, ADR 026, ticket 023 for the owner's steps; encrypted backups; market benchmark on the leaderboard, chart and player page, ADR 025; stale European prices fixed, ADR 024; ticket 022 done: player strategies; migrations 002 and 003 applied to production; `db-migrate` workflow, ADR 023; demo season reverted, ticket 021 step 1; migration 002 still to apply to Neon; ticket 021 added: end the demo and apply migration 002; ticket 020 done: manual instruments, ADR 022, migration 002 not yet applied to Neon; demo season live in production, ADR 021; emoji picker on the player form, ADR 020; season simulation with three personas on `testing`, five fixes: weekend job failures, price gaps after late entries, 90-day logout, stale trade date, index wording; user-flow test of the integrated `testing` branch, three fixes; open PRs 24–27 and the player page merged into one branch, `feat/integrate-pending`, plus a review pass over the result; ticket 019 done: daily database backup; ticket 017 done: fun stats at `/stats`; ticket 016 done: player page at `/portfolio/<id>`; ticket 015 done: value chart at `/chart`; ticket 014 done: leaderboard on the home page; ticket 013 done: daily job; ticket 012 done: valuation; ticket 009 done: transaction entry at `/trades`; ticket 011 done: snapshot ingestion and backfill CLI; ticket 008 done: player and instrument pages; login button shows a pending state; ticket 006 done: live on Azure SWA; ticket 005 done; Neon provisioned).
 
 ## Current state
 
+- **Public viewing (2026-11-14, ADR 028):** the owner asked to drop the
+  password so anyone can follow the league. Every page is now open; any
+  change (trades, players, instruments, manual values, strategies) still
+  asks for the league password, checked in each server action with
+  `requireEditor()`. A test guards that every action does. Not yet seen
+  on the live site. Whether changes should be fully open too is the
+  owner's call (open question below).
 - **News feed (2026-11-13, ADR 027):** under the leaderboard, the newest
   three days of everyone's moves (and `/news` for all of them), plus a
   teasing weekly recap after each Friday's prices; every finished week
@@ -89,9 +96,8 @@ session; update at the end of every change. Last updated: 2026-11-13 (news feed 
   real password gets in. They also found that SWA's edge cached the
   prerendered `/` and served it to everyone. Fixed by forcing dynamic
   rendering (ADR 006).
-- **Password gate done (ticket 005, ADR 006):** `src/proxy.ts` sends every
-  page to `/login` and returns 401 for `/api/*` until the shared password is
-  entered. The cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
+- **Password gate done (ticket 005, ADR 006; since 2026-11-14 it only
+  gates changes, ADR 028):** the login cookie lasts 90 days. `SITE_PASSWORD` must be set (`.env`
   locally) or nobody can log in. The first login after idle time takes a
   few seconds (SWA cold start), so the button shows a spinner, and after 3 s
   a "waking up the server" hint (`SubmitButton`).
@@ -357,6 +363,10 @@ are captured daily from day one):
    ETF buyers can only buy on Fri 30 Oct or Mon 2 Nov. Should trades before
    kick-off be refused, or the early days be ignored? Found in the season
    simulation; not changed.
+4. **Fully open editing?** Since 2026-11-14 anyone can view the site, but
+   changes need the password (ADR 028). The owner's "so anyone can join"
+   may mean strangers should also add players and trades without it. If
+   so, remove the `requireEditor()` calls (ADR 028 → Consequences).
 
 Answered on 2026-10-05 (now in `docs/SPEC.md` → Game rules, and ADR 002):
 start date, winner rule, entry method, allowed instruments, currency,
@@ -408,5 +418,7 @@ mid-game trading, fees, dividends, tolerance, access, update time, budget.
   (pink/orange, and green/aqua are the closest). The emoji at each line's
   end and the list above the chart carry identity, so this is accepted.
   If players mix lines up, add tap-to-highlight on the legend.
-- The password gate's only brute-force protection is a 1 s delay per wrong
+- The edit password's only brute-force protection is a 1 s delay per wrong
   attempt (ADR 006). Use a password that isn't trivially guessable.
+- Submitting a form without being logged in goes to `/login` and loses
+  what was typed (ADR 028).

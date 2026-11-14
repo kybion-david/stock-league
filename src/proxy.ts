@@ -7,28 +7,17 @@ import {
   verifySessionToken,
 } from "@/lib/auth";
 
-// Shared-password gate for every page and API route (ADR 006).
+// Every page is public to view (ADR 028). The proxy only keeps an editor's
+// session fresh: changes are gated in the server actions (`requireEditor`).
 export async function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
-  if (pathname === "/login") return NextResponse.next();
-
+  const response = NextResponse.next();
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const password = process.env.SITE_PASSWORD;
-  if (await verifySessionToken(token, password)) {
-    const response = NextResponse.next();
-    // Sliding expiry: a player who visits keeps a fresh 90-day session.
-    if (sessionNeedsRenewal(token!)) {
-      response.cookies.set(SESSION_COOKIE, await createSessionToken(password!), sessionCookieOptions());
-    }
-    return response;
+  // Sliding expiry: an editor who visits keeps a fresh 90-day session.
+  if ((await verifySessionToken(token, password)) && sessionNeedsRenewal(token!)) {
+    response.cookies.set(SESSION_COOKIE, await createSessionToken(password!), sessionCookieOptions());
   }
-
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const login = new URL("/login", request.url);
-  if (pathname !== "/") login.searchParams.set("next", pathname + search);
-  return NextResponse.redirect(login);
+  return response;
 }
 
 export const config = {

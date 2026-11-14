@@ -55,3 +55,8 @@ simulation, STATUS). The proxy now re-issues the cookie for another 90
 days when a valid one is more than a day old (`sessionNeedsRenewal`), so it
 only expires after 90 days without a visit. Cookie settings live in
 `sessionCookieOptions()` for both the login and the renewal.
+
+## Amendment (2026-11-14): public viewing
+
+The site is now public to view; the password only gates changes, in
+each server action rather than in the proxy. See ADR 028.

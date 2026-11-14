@@ -44,3 +44,8 @@ option ("data in the repo, edited by PR") is no longer workable.
   accepted.
 - Reconstructing a portfolio for any past date is straightforward: replay
   the ledger up to that date.
+
+## Amendment (2026-11-14): public viewing
+
+The site is now public to view; the password only gates changes, in
+each server action rather than in the proxy. See ADR 028.

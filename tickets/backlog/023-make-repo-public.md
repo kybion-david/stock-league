@@ -24,7 +24,8 @@ the owner can change, in this order. Agents can't do these steps.
       and the live site URL. Either accept that, or rewrite history first
       (needs a force-push to every branch, and every clone and open PR
       breaks). No secrets were found in history on 2026-11-13.
-- [ ] `SITE_PASSWORD` is long and unguessable (the live URL will be public).
+- [ ] `SITE_PASSWORD` is long and unguessable (the live URL is public, and
+      since ADR 028 the password is what guards every change).
 - [ ] Branch protection on `main`: require a pull request and the `ci` and
       `docs-check` checks. Leave approvals off, or agents can't merge their
       own PRs (`AGENTS.md`).

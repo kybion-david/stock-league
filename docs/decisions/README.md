@@ -27,11 +27,11 @@ What gets easier, what gets harder, what we gave up.
 | # | Title | Status |
 |---|---|---|
 | 001 | [Proposed tech stack](001-proposed-tech-stack.md) | Superseded by 004 |
-| 002 | [Ledger, shared password, free hosted DB](002-ledger-shared-password-db.md) | Accepted |
+| 002 | [Ledger, shared password, free hosted DB](002-ledger-shared-password-db.md) | Accepted (amended by 028) |
 | 003 | [Market data: Yahoo Finance + ECB/Frankfurter](003-market-data-source.md) | Accepted |
 | 004 | [Hosting on Azure SWA Free, database on Neon Free](004-hosting-and-database.md) | Accepted |
 | 005 | [App tooling: Node 22, Tailwind, ESLint, Vitest](005-app-tooling.md) | Accepted |
-| 006 | [Password gate: Next.js proxy + password-signed cookie](006-password-gate.md) | Accepted |
+| 006 | [Password gate: Next.js proxy + password-signed cookie](006-password-gate.md) | Accepted (amended by 028) |
 | 007 | [Ledger validation: end-of-day checks, exact shares](007-ledger-validation-rules.md) | Accepted |
 | 008 | [Database access: postgres.js, SQL migrations, PGlite tests](008-database-access-and-migrations.md) | Accepted |
 | 009 | [Deploy pipeline: Terraform once, token deploy on merge](009-deploy-pipeline.md) | Accepted |
@@ -51,5 +51,6 @@ What gets easier, what gets harder, what we gave up.
 | 023 | [Production migrations through a manual workflow](023-manual-migrate-workflow.md) | Accepted |
 | 024 | [Late closes: last traded price as fallback, re-check carried rows](024-late-closes-after-midnight.md) | Accepted |
 | 025 | [Market benchmark: a 70/30 ETF pair valued like a player](025-market-benchmark.md) | Accepted |
-| 026 | [Open-source the code, keep the game private](026-open-source-repo.md) | Accepted |
+| 026 | [Open-source the code, keep the game private](026-open-source-repo.md) | Accepted (amended by 028) |
 | 027 | [News feed: computed on page load, weekly recap from templates](027-news-feed.md) | Accepted |
+| 028 | [Public viewing, password only to make changes](028-public-viewing-password-to-edit.md) | Accepted |

@@ -49,3 +49,8 @@ fixtures (`u:p@…`) and the backup workflow's throwaway `scratch` database.
 - The live URL is public knowledge. The gate's only brute-force protection
   is a 1 s delay per wrong attempt (ADR 006), so the shared password must
   be long and unguessable.
+
+## Amendment (2026-11-14): public viewing
+
+The site is now public to view; the password only gates changes, in
+each server action rather than in the proxy. See ADR 028.

@@ -16,40 +16,15 @@ describe("proxy", () => {
   beforeEach(() => vi.stubEnv("SITE_PASSWORD", PASSWORD));
   afterEach(() => vi.unstubAllEnvs());
 
-  it("redirects pages to the login screen without a session", async () => {
-    const res = await proxy(request("/players?tab=1"));
-    expect(res.status).toBe(307);
-    const location = new URL(res.headers.get("location")!);
-    expect(location.pathname).toBe("/login");
-    expect(location.searchParams.get("next")).toBe("/players?tab=1");
-  });
-
-  it("returns 401 for API routes without a session", async () => {
-    const res = await proxy(request("/api/anything"));
-    expect(res.status).toBe(401);
-  });
-
-  it("denies a session signed with a different password", async () => {
-    const token = await createSessionToken("old-password");
-    expect((await proxy(request("/", token))).status).toBe(307);
-    expect((await proxy(request("/api/anything", token))).status).toBe(401);
-  });
-
-  it("denies everything when SITE_PASSWORD is not set", async () => {
-    const token = await createSessionToken(PASSWORD);
-    vi.stubEnv("SITE_PASSWORD", "");
-    expect((await proxy(request("/api/anything", token))).status).toBe(401);
-  });
-
-  it("lets a valid session through to pages and API routes", async () => {
-    const token = await createSessionToken(PASSWORD);
-    for (const path of ["/", "/players", "/api/anything"]) {
-      const res = await proxy(request(path, token));
+  it("lets everyone view pages without a session (ADR 028)", async () => {
+    for (const path of ["/", "/players?tab=1", "/trades/1", "/api/anything"]) {
+      const res = await proxy(request(path));
       expect(res.headers.get("x-middleware-next")).toBe("1");
+      expect(res.cookies.get(SESSION_COOKIE)).toBeUndefined();
     }
   });
 
-  it("renews a session that is more than a day old, so active players stay logged in", async () => {
+  it("renews an editor's session that is more than a day old", async () => {
     const day = 24 * 60 * 60 * 1000;
     const fresh = await proxy(request("/", await createSessionToken(PASSWORD)));
     expect(fresh.cookies.get(SESSION_COOKIE)).toBeUndefined();
@@ -64,9 +39,12 @@ describe("proxy", () => {
     expect(await verifySessionToken(renewed?.value, PASSWORD, Date.now() + 80 * day)).toBe(true);
   });
 
-  it("always lets the login page through", async () => {
-    const res = await proxy(request("/login"));
+  it("doesn't renew a session signed with a different password", async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const old = await createSessionToken("old-password", Date.now() - 89 * day);
+    const res = await proxy(request("/", old));
     expect(res.headers.get("x-middleware-next")).toBe("1");
+    expect(res.cookies.get(SESSION_COOKIE)).toBeUndefined();
   });
 });
 

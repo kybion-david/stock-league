@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { formValues, inputErrorState, type FormState } from "@/app/_components/form-state";
+import { requireEditor } from "@/app/login/require-editor";
 import { getDb } from "@/lib/db/postgres";
 import { addInstrument, addManualInstrument, updateInstrument } from "@/lib/instruments";
 import { createMarketDataClient } from "@/lib/market-data";
@@ -11,6 +12,7 @@ export async function addInstrumentAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  await requireEditor();
   const values = formValues(formData, ["symbol"]);
   try {
     const added = await addInstrument(getDb(), createMarketDataClient(), values.symbol);
@@ -25,6 +27,7 @@ export async function addManualInstrumentAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  await requireEditor();
   const values = formValues(formData, ["name"]);
   try {
     const added = await addManualInstrument(getDb(), values.name);
@@ -40,6 +43,7 @@ export async function editInstrumentAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  await requireEditor();
   const values = formValues(formData, ["name", "type", "currency", "exchange"]);
   try {
     await updateInstrument(getDb(), id, {
