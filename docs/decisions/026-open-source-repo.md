@@ -54,3 +54,8 @@ fixtures (`u:p@…`) and the backup workflow's throwaway `scratch` database.
 
 The site is now public to view; the password only gates changes, in
 each server action rather than in the proxy. See ADR 028.
+
+## Amendment (2026-11-15): no password
+
+The password is gone entirely; anyone can view and change everything.
+See ADR 029.

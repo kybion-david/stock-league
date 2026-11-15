@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 // Render every page per request and never prerender. A prerendered page is
 // cached at Azure SWA's edge (s-maxage of a year) and served from there
 // without running the app, so it would never show new prices or trades
-// (ADR 006, ADR 028).
+// (ADR 006, ADR 029).
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

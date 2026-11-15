@@ -1,6 +1,6 @@
 # 006. Password gate: Next.js proxy + password-signed cookie
 
-**Status:** Accepted
+**Status:** Superseded by 029 (2026-11-15)
 **Date:** 2026-10-05
 
 ## Context

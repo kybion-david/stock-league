@@ -45,9 +45,8 @@ Confirmed with the project owner (2026-10-05):
    own buys, sells, fees and dividends through a simple mobile-friendly form.
    `/trades` lists the players; `/trades/<player>` shows that player's cash,
    holdings and history and has the add form; each history row opens an
-   edit page with a delete button. Anyone can view them; anyone who has the
-   league password can edit anyone's entries; that's an accepted trust
-   trade-off among friends.
+   edit page with a delete button. Anyone can view and edit anyone's
+   entries, with no password (ADR 029); that's an accepted trade-off.
    Every add or edit stores who ("Entered by", a player's name picked on the
    form) and when, so mistakes can be traced. Deletes are permanent and
    leave no trace. Every change is checked against the player's whole
@@ -136,10 +135,8 @@ Confirmed with the project owner (2026-10-05):
      2), best and worst pick of the game (player and instrument, € gain
      including sold shares), and the fee champion. A stat that doesn't apply
      yet shows "n/a". Linked from the home page.
-5. **Access (ADR 028):** every page is **public to view**. Any change (add
-   or edit a trade, player, instrument, manual value or strategy, delete a
-   trade) needs **one shared league password**; without it the form sends
-   you to `/login`, which brings you back afterwards. No user accounts.
+5. **Access (ADR 029):** **fully open**. Anyone with the URL can view
+   every page and make any change, with no password and no user accounts.
    When entering a transaction, players pick their name from a list.
 6. **Players and instruments** (`/players`, `/instruments`): anyone can add
    or rename players (name, optional emoji) and add instruments. The emoji
@@ -272,12 +269,8 @@ Confirmed by the owner on 2026-10-05 (ADR 004). Everything is on free tiers.
   check it, encrypts it with `gpg --symmetric` and the `BACKUP_PASSPHRASE`
   secret (ADR 026: artifacts of a public repo are downloadable), and keeps
   it as a workflow artifact for 90 days.
-- **Auth (ADRs 006, 028):** a shared-password edit gate built into the app,
-  because SWA's built-in password protection isn't on the Free plan.
-  Viewing is public. `/login` sets a 90-day cookie signed with
-  `SITE_PASSWORD`; every server action checks it with `requireEditor()`,
-  and `src/proxy.ts` renews it on visits once it's a day old, so active
-  players stay logged in.
+- **Auth:** none (ADR 029). Mistakes or vandalism are undone from the
+  daily backup.
 - **Charts (ADR 018):** no library. Plain SVG laid out by `src/lib/chart.ts`.
 - **Market data (ADRs 003, 010):** Yahoo Finance chart API for stock, ETF and
   crypto prices and for symbol search. Frankfurter (ECB reference rates) for
@@ -296,10 +289,6 @@ the main checkout; see `AGENTS.md` → Session workflow.
 
 - `src/app/`: App Router routes (`page.tsx`, `layout.tsx`, later API
   `route.ts` files). Keep these thin; put logic in `src/lib/`.
-- `src/proxy.ts`: renews the login cookie (ADRs 006, 028). Next.js 16
-  calls middleware "proxy". Its matcher must keep excluding `/.swa/`.
-- `src/app/login/`: login page, its server action, and `require-editor.ts`,
-  the password check every other server action calls first (ADR 028).
 - `src/app/_components/`: shared components and helpers (`_` keeps the
   folder out of routing). `SubmitButton` gives any server-action form a
   pending state; `ui.tsx` has the page shell (`Page`), `Field` and
@@ -452,10 +441,6 @@ Requires Node 22 (`nvm use` reads `.nvmrc`).
 
 Env vars are listed in `.env.example`. Document each one here once it's in use.
 
-- `SITE_PASSWORD` (required): the shared password needed to make changes
-  (ADR 002, 006, 028). If it's unset, nobody can log in or change
-  anything (viewing still works). Changing it logs every device out. Set it in
-  `.env` locally, and as an app setting on SWA.
 - `DATABASE_URL`: Postgres connection string. For Neon, use the **pooled**
   connection string (host contains `-pooler`) with `sslmode=require`, as
   copied from Neon (`connect()` drops `channel_binding`, which postgres.js
@@ -470,8 +455,7 @@ Market data needs no env vars: both sources are keyless (ADR 003).
 
 Where production values live (ADR 009); never in git:
 
-- **SWA app settings** (runtime env for the live app): `SITE_PASSWORD` and
-  `DATABASE_URL`.
+- **SWA app settings** (runtime env for the live app): `DATABASE_URL`.
 - **GitHub Actions secrets:** `AZURE_STATIC_WEB_APPS_API_TOKEN` (SWA
   deployment token, used by `deploy.yml`) and `DATABASE_URL` (for the daily
   job, backups and `db-migrate`).
@@ -506,9 +490,6 @@ Where production values live (ADR 009); never in git:
 - Every page renders dynamically (root layout `dynamic = "force-dynamic"`).
   Never make a page static or revalidated: SWA's edge would cache it for
   a year and never show new data (ADR 006).
-- Every exported server action starts with `await requireEditor();`
-  (`@/app/login/require-editor`), outside its `try`. A test fails if one
-  doesn't (ADR 028).
 - Data-access functions take a `Db` argument (`@/lib/db/db`) instead of
   importing the client, so tests can pass a PGlite `createTestDb()` loaded
   with the real migrations. Write plain SQL with `$1` parameters, and never
