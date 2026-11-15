@@ -1,6 +1,6 @@
 # 028. Public viewing, password only to make changes
 
-**Status:** Accepted
+**Status:** Superseded by 029 (2026-11-15)
 **Date:** 2026-11-14
 **Amends:** 002 (shared password), 006 (password gate), 026 ("the game stays private")
 

@@ -1,8 +1,8 @@
 # Stock League
 
 A just-for-fun investment game for a group of friends. The code is open
-source (MIT). Anyone can follow the game on the live site; making changes
-needs the league's shared password.
+source (MIT), and the live site is open: anyone can follow the game or
+join it, with no password.
 
 Each player (5–7 people) invests **€1,000** at the start of November 2026 and
 records how they split it — e.g. €200 in Apple, €300 in Google, €3 in fees.
@@ -27,7 +27,7 @@ Needs Node 22 (`nvm use`).
 
 ```sh
 npm install
-cp .env.example .env   # set SITE_PASSWORD (anything), and DATABASE_URL to your own dev database
+cp .env.example .env   # set DATABASE_URL to your own dev database
 npm run db:migrate
 npm run db:seed        # optional fake players and trades
 npm run dev            # http://localhost:3000

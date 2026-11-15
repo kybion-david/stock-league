@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** Shared input styling, matching the login page. */
+/** Shared input styling. */
 export const inputClass =
   "w-full rounded-xl border border-foreground/15 bg-transparent px-4 py-3 text-lg";
 

@@ -3,7 +3,6 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { formValues, inputErrorState, type FormState } from "@/app/_components/form-state";
-import { requireEditor } from "@/app/login/require-editor";
 import { getDb } from "@/lib/db/postgres";
 import { formatDay } from "@/lib/leaderboard";
 import { setManualValue } from "@/lib/manual";
@@ -34,7 +33,6 @@ export async function addTransactionAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireEditor();
   const values = formValues(formData, FIELDS);
   try {
     const added = await createTransaction(getDb(), playerId, toInput(values));
@@ -54,7 +52,6 @@ export async function setManualValueAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireEditor();
   const values = formValues(formData, ["instrumentId", "date", "worth"]);
   try {
     const saved = await setManualValue(getDb(), playerId, {
@@ -77,7 +74,6 @@ export async function editTransactionAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireEditor();
   const values = formValues(formData, FIELDS);
   try {
     await updateTransaction(getDb(), id, toInput(values));
@@ -89,7 +85,6 @@ export async function editTransactionAction(
 }
 
 export async function deleteTransactionAction(id: number, playerId: number): Promise<FormState> {
-  await requireEditor();
   try {
     await deleteTransaction(getDb(), id);
   } catch (err) {
